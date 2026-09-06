@@ -1,0 +1,301 @@
+:root {
+
+  --bg:#111417; --fg:#e8eaed; --muted:#8a9199; --line:#23282d; --accent:#4c9ffe;
+  --card:#1a1f24; --btn:#2a3138;
+  --indent:22px;
+
+  --c-todo:var(--accent);
+  --c-event:#8b7ff0;
+  --c-expense:#5bbf7a;
+  --c-4:#f2a154;
+  --c-habit:var(--c-4);
+  --c-holiday:#ff7b72;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+        --bg:#ffffff; --fg:#1c1e21; --muted:#6b7280; --line:#e3e6ea; --accent:#1a73e8;
+        --card:#f3f4f6; --btn:#e8eaed;
+        --c-holiday:#cf222e;
+      }
+}
+:root[data-theme="light"] {
+  --bg:#ffffff; --fg:#1c1e21; --muted:#6b7280; --line:#e3e6ea; --accent:#1a73e8;
+  --card:#f3f4f6; --btn:#e8eaed;
+  --c-holiday:#cf222e;
+}
+:root[data-theme="dark"] {
+  --bg:#111417; --fg:#e8eaed; --muted:#8a9199; --line:#23282d; --accent:#4c9ffe;
+  --card:#1a1f24; --btn:#2a3138;
+  --c-holiday:#ff7b72;
+}
+[hidden] { display:none !important; }
+html { font-size:var(--base-font, 17px); }
+@keyframes cal-itemflash-kf { 0%,30%,60% { background:rgba(76,159,254,.5); } 15%,45%,100% { background:transparent; } }
+:root { --dock-w: clamp(360px, 42%, 600px); }
+html, body { margin:0; height:100%; overflow-x:hidden; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system, "Segoe UI", "Noto Sans TC", system-ui, sans-serif;
+  -webkit-text-size-adjust:100%;
+}
+#undotoast { position:fixed; left:50%; transform:translateX(-50%); bottom:14px; z-index:80;
+  display:flex; align-items:center; gap:12px; max-width:92vw;
+  padding:10px 12px 10px 16px; border-radius:10px;
+  background:#333; color:#fff; box-shadow:0 6px 24px rgba(0,0,0,.35); font-size:14px; }
+#undotoast[hidden] { display:none; }
+#undotoast .ut-msg { white-space:nowrap; }
+#undotoast .ut-x { background:transparent; border:none; color:#bbb; font-size:14px; padding:4px 6px; cursor:pointer; }
+.fpick-t { font-size:12px; padding:1px 4px; background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:6px; }
+.fpick-sep { font-size:12px; color:var(--muted); }
+.fpick-dur { font-size:12px; color:var(--c-4); font-weight:700; margin-left:2px; }
+#habitPanel { position:fixed; inset:0; z-index:70; display:flex; align-items:center; justify-content:center; padding:14px; box-sizing:border-box; overflow:hidden; }
+#habitPanel[hidden] { display:none; }
+#habitPanel .pm-backdrop { position:absolute; inset:0; background:rgba(0,0,0,.5); }
+.hb-card { position:relative; z-index:1; width:min(520px,94vw); max-height:88vh; overflow:hidden; box-sizing:border-box; background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:12px; padding:16px; box-shadow:0 12px 40px rgba(0,0,0,.4); display:flex; flex-direction:column; gap:6px; }
+.hb-head { display:flex; align-items:center; gap:12px; }
+.hb-head .pm-title { flex:0 0 auto; font-weight:700; font-size:17px; margin:0; }
+.hb-head .hb-tabs { flex:1; }
+.hb-namelink { cursor:pointer; text-decoration:underline dotted var(--muted); text-underline-offset:3px; }
+.hb-full, .hb-undo, .hb-redo { flex:0 0 auto; width:34px; height:34px; font-size:16px; background:transparent; color:var(--muted); border:1px solid var(--line); border-radius:8px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.hb-undo:disabled, .hb-redo:disabled { opacity:.3; cursor:default; }
+.hb-card--full { width:100vw !important; max-width:100vw; height:100vh; height:100dvh; max-height:100vh; max-height:100dvh; border-radius:0; }
+.hb-tabs { display:flex; gap:6px; }
+.hb-tab { flex:1; padding:6px; font-size:14px; background:transparent; color:var(--muted); border:1px solid var(--line); border-radius:8px; cursor:pointer; }
+.hb-tab.on { background:var(--c-4); color:#fff; border-color:var(--c-4); font-weight:700; }
+.hb-body { display:flex; flex-direction:column; gap:10px; flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; }
+.hb-foot { display:flex; justify-content:flex-end; flex:0 0 auto; gap:8px; align-items:center; }
+.hb-close { background:transparent; color:var(--muted); border:1px solid var(--line); border-radius:8px; padding:5px 14px; cursor:pointer; }
+.hb-list { display:flex; flex-direction:column; gap:6px; }
+.hb-empty { color:var(--muted); font-size:13px; padding:16px 4px; text-align:center; }
+.hb-item { text-align:left; background:transparent; color:var(--fg); border:1px solid var(--line); border-radius:8px; padding:8px 10px; cursor:pointer; }
+.hb-item:hover, .hb-item:active { border-color:var(--c-4); }
+.hb-item b { display:block; font-size:14px; }
+.hb-item span { display:block; font-size:12px; color:var(--muted); font-family:monospace; margin-top:2px; }
+.hb-itemrow { display:flex; gap:6px; align-items:stretch; }
+.hb-item-main { flex:1; }
+.hb-item-del { flex:0 0 auto; background:transparent; color:var(--fg); border:1px solid var(--line); border-radius:8px; padding:0 11px; cursor:pointer; font-size:15px; -webkit-tap-highlight-color:transparent; }
+.hb-item-del:hover, .hb-item-del:active { border-color:#e5484d; }
+.hb-add { background:transparent; color:var(--c-4); border:1px dashed var(--c-4); border-radius:8px; padding:8px; cursor:pointer; font-size:14px; }
+.hb-tpl { display:flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:8px; padding:7px 10px; cursor:pointer; }
+.hb-tpl.exists { opacity:.5; }
+.hb-tpllist { max-height:44vh; overflow:auto; overscroll-behavior:contain; padding-right:2px; }
+.hb-tplcat { font-size:12px; font-weight:700; color:var(--muted); letter-spacing:.04em; padding:8px 2px 1px; }
+.hb-tplcat:first-child { padding-top:0; }
+.hb-tpl-txt { flex:1; }
+.hb-tpledit { flex:none; background:transparent; color:var(--accent); border:1px solid var(--line); border-radius:8px; padding:5px 9px; font-size:13px; cursor:pointer; white-space:nowrap; }
+.hb-stickybar { position:sticky; bottom:0; background:var(--bg); padding-top:8px; border-top:1px solid var(--line); z-index:2; }
+.hb-stickybar .hb-save { flex:1; }
+.hb-stickybar .hb-save:disabled { opacity:.45; cursor:default; }
+.hb-tpl-txt { display:flex; flex-direction:column; }
+.hb-tpl-txt b { font-size:14px; }
+.hb-tpl-txt span { font-size:12px; color:var(--muted); font-family:monospace; }
+.hb-field { display:flex; flex-direction:column; gap:3px; }
+.hb-lbl { font-size:12px; color:var(--muted); }
+.hb-in { padding:7px 9px; font-size:14px; background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:8px; box-sizing:border-box; }
+.hb-types { display:flex; flex-wrap:wrap; gap:6px; }
+.hb-type { padding:5px 11px; font-size:13px; background:transparent; color:var(--fg); border:1px solid var(--line); border-radius:16px; cursor:pointer; }
+.hb-type.on { background:var(--c-4); color:#fff; border-color:var(--c-4); }
+.hb-cfg { display:flex; flex-direction:column; gap:8px; }
+.hb-syntax { font-size:12px; color:var(--muted); font-family:monospace; background:rgba(242,161,84,.1); border-radius:6px; padding:5px 8px; }
+.hb-pvbox { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:6px 8px; border:1px dashed var(--line); border-radius:8px; background:repeating-linear-gradient(45deg, transparent, transparent 7px, rgba(128,128,128,.05) 7px, rgba(128,128,128,.05) 14px); }
+.hb-pv { pointer-events:none; opacity:.5; filter:saturate(.6); }
+.hb-pvbox .hb-lbl { flex:0 0 100%; }
+.hb-inc { display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer; }
+.hb-formbar { display:flex; gap:8px; margin-top:4px; }
+.hb-cancel { background:transparent; color:var(--muted); border:1px solid var(--line); border-radius:8px; padding:6px 12px; cursor:pointer; }
+.hb-save { flex:1; background:var(--c-4); color:#fff; border:0; border-radius:8px; padding:6px; font-weight:700; cursor:pointer; }
+.hb-del { background:transparent; color:#e5484d; border:1px solid rgba(229,72,77,.5); border-radius:8px; padding:6px 12px; cursor:pointer; }
+.hb-rectop { display:flex; gap:8px; align-items:center; }
+.hb-rectop .hb-in { flex:0 1 auto; }
+.hb-reclist { display:flex; flex-direction:column; gap:8px; }
+.hb-reclist.hb-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(155px, 1fr)); column-gap:12px; row-gap:0; align-items:start; }
+.hb-reclist.hb-grid .hb-recrow.hb-rowwide { grid-column:1 / -1; }
+.hb-reclist.hb-grid .hb-recrow { flex-wrap:nowrap; min-width:0; gap:4px; }
+.hb-reclist.hb-grid .hb-recname { flex:0 0 auto; white-space:nowrap; overflow:visible; }
+.hb-reclist.hb-grid .hb-recrow .hb-recin { flex-wrap:nowrap; }
+.hb-reclist.hb-grid .hb-recrow:not(.hb-rowwide) .hb-recchip { min-width:0; padding:3px 7px; }
+.hb-reclist.hb-grid .hb-recrow:not(.hb-rowwide) .hb-recnum { min-width:40px; }
+.hb-recrow { display:flex; align-items:center; gap:8px; padding:4px 0; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+.hb-recname { flex:0 0 5.5em; font-size:14px; display:flex; flex-direction:column; }
+.hb-tpl-demo { display:block; font-size:11px; color:var(--muted); margin-top:1px; }
+#habitPanel .hb-title { flex:0 0 auto; font-size:20px; padding-right:2px; }
+#habitPanel .hb-x { flex:0 0 auto; width:34px; height:34px; margin-left:auto; background:transparent; color:var(--fg); border:1px solid var(--line); border-radius:8px; font-size:15px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+#habitPanel .hb-x:active { background:var(--btn); }
+.hb-recnamehead { display:flex; align-items:center; gap:3px; }
+.hb-recin { display:inline-flex; flex-wrap:wrap; align-items:center; gap:4px; flex:1; }
+.hb-recin .hb-in { flex:1; min-width:80px; }
+.hb-listbox { flex:1 0 100%; display:flex; flex-direction:column; gap:4px; width:100%; }
+.hb-listbox.hb-vlist { flex-direction:row; flex-wrap:wrap; gap:8px; align-items:flex-start; }
+.hb-vchip { display:inline-flex; flex-direction:column; align-items:center; gap:4px; padding:6px 5px; border:1px solid var(--line); border-radius:8px; background:var(--bg); -webkit-tap-highlight-color:transparent; }
+.hb-vchip.on { background:rgba(242,161,84,.18); border-color:var(--c-4); }
+.hb-vchip input[type=checkbox] { margin:0; width:20px; height:20px; }
+.hb-vtext { writing-mode:vertical-rl; text-orientation:upright; letter-spacing:1px; font-size:15px; line-height:1.15; max-height:7em; overflow:hidden; cursor:text; }
+.hb-vchip.on .hb-vtext { color:#c07b1a; }
+.hb-vadd { justify-content:center; color:var(--c-4); border-style:dashed; font-size:20px; min-height:3em; cursor:pointer; }
+.hb-listline { display:flex; align-items:center; gap:6px; }
+.hb-listline .hb-listtext { flex:1 1 auto; min-width:0; }
+.hb-listtext.done { text-decoration:line-through; color:var(--muted); }
+.hb-listnew .hb-listtext { border-style:dashed; }
+.hb-qkey { flex:0 0 5em; min-width:0; }
+.hb-qlabel { flex:0 0 auto; max-width:6em; font-size:13px; color:var(--muted); cursor:help; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.hb-qanstext { flex:1 1 auto; min-width:0; font-size:14px; color:var(--fg); line-height:1.35; word-break:break-word; cursor:text; padding:2px 0; }
+.hb-qmore { align-self:flex-start; background:transparent; border:0; color:var(--c-4); font-size:12px; padding:3px 0; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.hb-qempty { display:flex; flex-direction:column; gap:4px; }
+.hb-qempty[hidden] { display:none; }
+.hb-recclr { flex:0 0 auto; background:transparent; color:var(--muted); border:1px solid var(--line); border-radius:8px; padding:3px 9px; font-size:12px; cursor:pointer; white-space:nowrap; }
+.hb-recclr:hover, .hb-recclr:active { color:#e5484d; border-color:#e5484d; }
+.hb-recdesc { flex:1; }
+.hb-recnum { min-width:52px; text-align:center; font-variant-numeric:tabular-nums; }
+.hb-recnum.hb-tgtedit { cursor:pointer; text-decoration:underline dotted var(--muted); text-underline-offset:3px; }
+.hb-recchip { min-width:30px; padding:3px 9px; font-size:14px; background:transparent; color:var(--fg); border:1px solid var(--line); border-radius:8px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.hb-recchip.on { background:var(--c-4); color:#fff; border-color:var(--c-4); }
+.hb-recrow > .hb-recin { flex:0 1 auto; }
+.hb-optrow { display:flex; flex-wrap:nowrap; gap:6px; overflow-x:auto; max-width:100%; -webkit-overflow-scrolling:touch; padding-bottom:2px; scrollbar-width:thin; }
+.hb-optrow .hb-recchip { flex:0 0 auto; }
+.hb-multisel { display:flex; flex-wrap:wrap; gap:6px; }
+.hb-recsel.hb-multi1 { flex:0 0 auto; width:auto; min-width:0; padding:6px 1px 6px 5px; }
+.hb-recin .hb-recsel:not(.hb-multi1) { flex:0 0 auto; width:auto; min-width:0; max-width:130px; padding-right:2px; }
+.hb-recrow .hb-recnum { font-size:15px; }
+.hb-recrow.hb-rowhidden { opacity:.5; }
+@keyframes justmoved {
+  0% { background:transparent; } 15% { background:rgba(76,159,254,.4); }
+  35% { background:transparent; } 55% { background:rgba(76,159,254,.4); }
+  75%,100% { background:transparent; }
+}
+@keyframes flashonce {
+  0% { background:transparent; } 30% { background:rgba(76,159,254,.4); } 100% { background:transparent; }
+}
+@media (min-width:880px) {
+  :root { --sp-w:min(460px, 42vw); }
+}
+
+/* ── 首頁 ─────────────────────────────────────────────── */
+body { margin: 0; background: var(--bg, #fff); color: var(--fg, #222); font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif; }
+#home { max-width: 32rem; margin: 0 auto; padding: calc(max(2.5rem, env(safe-area-inset-top)) + var(--warn-h, 0px)) 1.25rem 3rem; }
+body.panel-open #home { display: none; }            /* 面板開著時首頁不佔畫面(避免背後可捲) */
+.home-title { font-size: 1.6rem; margin: 0 0 .5rem; letter-spacing: .02em; }
+.home-sub { margin: 0 0 1.75rem; color: var(--muted, #667); font-size: .95rem; }
+.home-go {
+  width: 100%; padding: .9rem 1rem; font-size: 1.05rem; font-weight: 600;
+  color: #fff; background: var(--c-habit, #f2a154); border: 0; border-radius: 12px; cursor: pointer;
+}
+.home-go:active { filter: brightness(.94); }
+.home-tools { display: flex; gap: .5rem; margin-top: 1rem; }
+.home-mini {
+  flex: 1; padding: .6rem .5rem; font-size: .9rem;
+  color: var(--fg, #222); background: var(--btn, #f5f5f7);
+  border: 1px solid var(--line, #ddd); border-radius: 10px; cursor: pointer;
+}
+.home-note { margin-top: 2rem; font-size: .88rem; color: var(--muted, #667); }
+.home-note summary { cursor: pointer; padding: .4rem 0; font-weight: 600; color: var(--fg, #222); }
+.home-note p { margin: .5rem 0; }
+.home-note ul { margin: .4rem 0; padding-left: 1.2em; }
+.home-note li { margin: .3rem 0; }
+.home-note b { color: var(--fg, #222); }
+.home-ios { padding-top: .25rem; border-top: 1px dashed var(--line, #ddd); }
+
+/* 用不到的按鈕用 CSS 關掉(比動程式碼乾淨) */
+#habitPanel .hb-full { display: none !important; }      /* 面板本來就滿版,不需要「全螢幕/還原」 */
+
+/* 面板就是整個 App 的主畫面 → 直接滿版,不做成置中小卡 */
+#habitPanel .hb-card {
+  width: 100vw; max-width: 100vw; height: 100vh; height: 100dvh; max-height: 100dvh;
+  border-radius: 0; border: 0;
+  padding-top: calc(max(12px, env(safe-area-inset-top)) + var(--warn-h, 0px));   /* 有警告條時往下讓位 */
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+/* 存不了資料的警告:蓋在面板之上,不然一開就被面板蓋住看不到 */
+.hl-warn {
+  position: fixed; z-index: 200; inset: 0 0 auto 0;
+  display: flex; align-items: flex-start; gap: .5rem;
+  padding: max(.7rem, env(safe-area-inset-top)) .85rem .7rem;
+  font-size: .88rem; line-height: 1.5;
+  color: #7a3b00; background: #fdf0dd; border-bottom: 1px solid #f0c68a;
+}
+.hl-warn span { flex: 1; }
+.hl-warn-x { flex: 0 0 auto; background: transparent; border: 0; color: inherit; font-size: 1rem; cursor: pointer; padding: 0 .25rem; }
+@media (prefers-color-scheme: dark) { .hl-warn { color: #ffd9ad; background: #3a2a17; border-bottom-color: #6b4a24; } }
+
+/* 習慣名稱不可點 → 拿掉「可點」的暗示 */
+#habitPanel .hb-namelink { text-decoration: none; cursor: default; }
+
+/* 記錄頁:一項一排,好點也好截圖 */
+#habitPanel .hb-reclist.hb-grid { display: flex; flex-direction: column; }
+
+/* 桌面滑鼠下,時間欄的字和時鐘圖示會小到按不準 → 一律給好按的尺寸 */
+#habitPanel input[type=time] { font-size: 15px; padding: 4px 6px; min-height: 32px; }
+
+/* 全部刪除:危險操作,做成低調的紅字,不跟「新增習慣」爭注意力 */
+#habitPanel .hl-wipe { margin-top: 4px; color: #c0392b; border-color: rgba(192, 57, 43, .45); border-style: solid; font-size: 13px; }
+@media (prefers-color-scheme: dark) { #habitPanel .hl-wipe { color: #ff8a7a; border-color: rgba(255, 138, 122, .4); } }
+
+/* 範本清單不要自己限高(不然會變成「只用一半畫面、下面空一片卻還要捲」)→ 跟著面板一起捲 */
+#habitPanel .hb-tpllist { max-height: none; overflow: visible; }
+
+/* 範本頁吸底列:全部勾選鈕貼合內容寬,把剩下的空間讓給「加入勾選的」 */
+#habitPanel .hl-selall { flex: 0 0 auto; font-size: 13px; }
+
+/* 管理頁不該出現「複製文字 / 存成圖」—— 那是記錄頁的動作(共用底部列,用 tab 標記關掉) */
+#habitPanel[data-tab="manage"] .hb-copytxt,
+#habitPanel[data-tab="manage"] .hb-copyimg { display: none !important; }
+
+/* 全部勾選:原本跟「返回」同款太隱形,給它橘框 + 粗字,一眼看得到 */
+#habitPanel .hl-selall {
+  flex: 0 0 auto; font-size: 14px; font-weight: 700;
+  color: var(--c-habit); border-color: var(--c-habit); border-style: solid;
+  background: color-mix(in srgb, var(--c-habit) 12%, transparent);
+}
+
+/* 新增習慣頁頂部的範本快捷 */
+.hl-picks { display: flex; flex-direction: column; gap: 4px; padding-bottom: 6px; border-bottom: 1px dashed var(--line); }
+.hl-picks .hb-syntax { margin-bottom: 2px; }
+.hl-pickrow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.hl-pickcat { flex: 0 0 auto; min-width: 3.4em; font-size: 11px; color: var(--muted); white-space: nowrap; }
+.hl-pick {
+  padding: 3px 8px; font-size: 12.5px; line-height: 1.3; white-space: nowrap;
+  color: var(--fg); background: var(--btn);
+  border: 1px solid var(--line); border-radius: 14px; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.hl-pick.on { background: var(--c-habit); border-color: var(--c-habit); color: #fff; font-weight: 700; }
+
+/* 時間欄放大後,一列兩個(睡眠的起訖)會超出畫面右邊 → 允許換行 */
+#habitPanel .hb-reclist .hb-recrow .hb-recin { flex-wrap: wrap; }
+
+/* 還沒設目標:數字顯示成 0/? 並標成主題色,一眼看得出這裡待填 */
+#habitPanel .hb-recnum.hl-notgt { color: var(--c-habit); border-bottom-style: dashed; }
+.hl-tgthint {
+  padding: 7px 10px; margin: 2px 0 4px; border-radius: 8px; font-size: 12.5px; line-height: 1.5;
+  color: var(--c-habit); background: color-mix(in srgb, var(--c-habit) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c-habit) 45%, transparent);
+}
+
+/* 日期旁的小字:講清楚它只影響輸出,不是切去看那天的記錄 */
+.hl-datenote { flex: 1 1 100%; font-size: 11px; color: var(--muted); line-height: 1.3; }
+
+/* 清空這天的記錄:低調、置右,不跟記錄搶注意力 */
+#habitPanel .hl-clearday { align-self: flex-end; margin-top: 6px; font-size: 12.5px; color: var(--muted); }
+
+/* 亮/暗切換:跟旁邊的 ↩ ↪ 同款大小 */
+.hl-theme {
+  flex: 0 0 auto; width: 34px; height: 34px; font-size: 16px; line-height: 1;
+  color: var(--muted); background: transparent;
+  border: 1px solid var(--line); border-radius: 8px; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.hl-theme:active { color: var(--c-habit); border-color: var(--c-habit); }
+
+/* 日期列多了一行小字說明 → 允許換行,不然「今天」會被擠成兩行 */
+#habitPanel .hb-rectop { flex-wrap: wrap; }
+
+/* 就地輸入目標:貼合數字的位置,不要撐開整列 */
+#habitPanel .hl-tgtin {
+  width: 4.2em; padding: 2px 4px; font-size: 15px; text-align: center;
+  color: var(--fg); background: var(--bg);
+  border: 1px solid var(--c-habit); border-radius: 6px;
+}
+
+/* 兩段式確認:按第一下後的警告狀態 */
+#habitPanel .hl-armed {
+  color: #fff !important; background: #c0392b; border-color: #c0392b !important; font-weight: 700;
+}
