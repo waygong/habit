@@ -3,7 +3,7 @@ import { load, flush, status } from './store.js';
 import { openHabitPanel, seedTemplatesIfEmpty } from './habit.js';
 import { exportBackup, importBackupFile } from './io.js';
 import { showUndoToast } from './render.js';
-import { applyStoredTheme } from './lite-extras.js';
+import { applyStoredTheme, applyStoredColor } from './lite-extras.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -118,6 +118,7 @@ function warnNoStorage() {
 
 async function boot() {
   applyStoredTheme();   // 先套用上次選的亮/暗,免得畫面閃一下
+  applyStoredColor();   // 以及上次選的主題色
   await load();
   if (!status.persistent) warnNoStorage();
   seedTemplatesIfEmpty();   // 全新的裝置 → 先把推薦範本準備好,一開就能記錄
