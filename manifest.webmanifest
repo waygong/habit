@@ -1,0 +1,13 @@
+{
+  "name": "習慣記錄",
+  "short_name": "習慣",
+  "description": "每天記錄自己的習慣;資料只留在自己的裝置上。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f2a154",
+  "icons": [
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
