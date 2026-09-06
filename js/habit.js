@@ -7,7 +7,7 @@ import { revealNode } from './render.js';
 import { newNode } from './model.js';
 import { rerender, defStep, showUndoToast, isHidden } from './render.js';
 import { localTodayYmd, nodeById, resolveTarget } from './ops.js';
-import { wipeAllButton, selectAllButton, templatePicks, targetHint, clearDayButton, themeToggle } from './lite-extras.js';
+import { wipeAllButton, selectAllButton, templatePicks, targetHint, clearDayButton, themeToggle, helpLink } from './lite-extras.js';
 
 const HB_TGT_KEY = 'habitTargetId';        // 記錄存到哪
 const HB_DEFTGT_KEY = 'habitDefTargetId';  // 習慣「定義」存到哪(建習慣用)
@@ -641,6 +641,7 @@ function paintRecord(body, m) {
     }
     let noteHint = null;
     nm.appendChild(head);
+    { const hl = helpLink(h.name); if (hl) { head.appendChild(hl.btn); row.append(hl.tip); } }   // 有固定代號的習慣:名稱旁給個「?」,點了展開說明
     if (noteHint) nm.appendChild(noteHint);
     row.append(nm);
     if (rec && wide && h.ftype !== 'count' && !(h.ftype === 'select' && h.cfg.multi)) {   // 清除鈕:count(用 − 減到 0)、多筆下拉(用下拉清)、窄型並排 都不顯示;只留 睡眠/清單/五問

@@ -336,3 +336,20 @@ body.panel-open #home { display: none; }            /* 面板開著時首頁不�
 /* 記錄時「往下拉」不要變成重新整理:填到一半誤觸會整個重來。
    關掉面板回到首頁就恢復正常(要重整隨時可以),而且有新版時頂端會自己跳提示,不必靠下拉。 */
 html:has(body.panel-open), body.panel-open { overscroll-behavior-y: none; }
+
+/* 名稱旁的「?」:點了展開代號說明(不連外) */
+#habitPanel .hl-help {
+  flex: 0 0 auto; margin-left: 5px; padding: 0;
+  width: 18px; height: 18px; line-height: 16px;
+  font-size: 12px; font-weight: 700; text-align: center;
+  color: var(--muted); background: var(--btn); border: 1px solid var(--line); border-radius: 50%;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+#habitPanel .hl-help.on { color: #fff; background: var(--c-habit); border-color: var(--c-habit); }
+#habitPanel .hb-recrow:has(> .hl-tip:not([hidden])) { flex-wrap: wrap; }   /* 說明展開時讓它換到自己一行 */
+#habitPanel .hl-tip {
+  flex: 1 1 100%; order: 9;                       /* 佔整行、排在該列最後 */
+  margin: 4px 0 2px; padding: 6px 9px; border-radius: 8px;
+  font-size: 12.5px; line-height: 1.7; white-space: normal; word-break: break-word;
+  color: var(--muted); background: var(--card);
+}
