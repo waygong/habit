@@ -12,16 +12,32 @@ function openPanel() {
   openHabitPanel(null, () => document.body.classList.remove('panel-open'));   // 關面板 → 回首頁
 }
 
-// 選好備份檔之後問「怎麼進來」。刻意不用系統的確認視窗:
-//   那種視窗只有「確定/取消」兩顆,一定得把其中一個動作塞給「取消」,
-//   而使用者按取消是想放棄 —— 結果反而執行了最危險的覆蓋。這裡三個選擇各自一顆鈕。
+// 有新版可用 → 頂端一條提示,點了就換過去。
+function showUpdateBar() {
+  if (document.querySelector('.hl-update')) return;
+  const el = document.createElement('div');
+  el.className = 'hl-update';
+  const msg = document.createElement('span');
+  msg.textContent = '有新版本了';
+  const go = document.createElement('button');
+  go.type = 'button'; go.className = 'hl-update-go'; go.textContent = '重新載入';
+  go.addEventListener('click', () => location.reload());
+  const x = document.createElement('button');
+  x.type = 'button'; x.className = 'hl-update-x'; x.textContent = '✕'; x.setAttribute('aria-label', '稍後再說');
+  x.addEventListener('click', () => el.remove());
+  el.append(msg, go, x);
+  document.body.prepend(el);
+}
+
+// 選好備份檔之後再確認一次。刻意不用系統的確認視窗:
+//   那種視窗只有「確定/取消」兩顆,而使用者按取消是想放棄 —— 不該讓取消去執行任何動作。
 function askImportMode(file) {
   const box = document.getElementById('importAsk');
   const done = (msg) => { box.hidden = true; box.innerHTML = ''; if (msg) showUndoToast(0, msg); };
 
-  const run = async (mode) => {
+  const run = async () => {
     try {
-      const r = await importBackupFile(file, mode);
+      const r = await importBackupFile(file);
       done('已還原 ' + r.count + ' 筆');
     } catch (err) {
       done('');
@@ -35,7 +51,7 @@ function askImportMode(file) {
   name.textContent = '📄 ' + file.name;
   const q = document.createElement('p');
   q.className = 'ask-q';
-  q.textContent = '這份備份要怎麼進來?';
+  q.textContent = '要用這份備份取代現在的資料嗎?';
   box.append(name, q);
 
   const mk = (label, sub, cls, fn) => {
@@ -48,28 +64,26 @@ function askImportMode(file) {
     return b;
   };
 
-  box.append(mk('合併', '保留現在的,把備份接在後面', '', () => run('merge')));
+  box.append(mk('取消', '什麼都不做', 'ask-cancel', () => done('')));   // 安全的放上面,危險的放下面
 
-  const ovr = mk('整份覆蓋', '現在的設定和記錄會被換掉,救不回來', 'ask-danger', () => {});
+  const ovr = mk('用備份取代', '現在的設定和記錄會被換掉,救不回來', 'ask-danger', () => {});
   let armed = false, timer = null;
   ovr.addEventListener('click', () => {
     if (!armed) {
       armed = true; ovr.classList.add('ask-armed');
-      ovr.querySelector('b').textContent = '⚠ 再按一次:整份覆蓋';
+      ovr.querySelector('b').textContent = '⚠ 再按一次:確定取代';
       ovr.querySelector('span').textContent = '現在這台裝置上的資料會被換掉';
       timer = setTimeout(() => {
         armed = false; ovr.classList.remove('ask-armed');
-        ovr.querySelector('b').textContent = '整份覆蓋';
+        ovr.querySelector('b').textContent = '用備份取代';
         ovr.querySelector('span').textContent = '現在的設定和記錄會被換掉,救不回來';
       }, 4000);
       return;
     }
     if (timer) clearTimeout(timer);
-    run('replace');
+    run();
   });
   box.append(ovr);
-
-  box.append(mk('取消', '什麼都不做', 'ask-cancel', () => done('')));
   box.hidden = false;
   box.scrollIntoView({ block: 'nearest' });
 }
@@ -120,7 +134,18 @@ async function boot() {
   openPanel();                                               // 一開啟就直接進記錄畫面
 
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});   // 離線可用;失敗不影響功能
+    navigator.serviceWorker.register('sw.js').then((reg) => {
+      // 有新版被裝好時主動說一聲 —— 裝在主畫面的人不會自己去重新整理,
+      //   沒有這條就得「關掉再開兩次」才會換到新版,而且完全沒有提示。
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) showUpdateBar();
+        });
+      });
+      setInterval(() => { reg.update().catch(() => {}); }, 60 * 60 * 1000);   // 每小時問一次有沒有新版
+    }).catch(() => {});   // 失敗不影響功能
   }
 
   // 跟瀏覽器要「持久化儲存」:拿到的話,空間不足時不會被自動清掉。

@@ -318,3 +318,17 @@ body.panel-open #home { display: none; }            /* 面板開著時首頁不�
 .home-ask .ask-cancel { margin-bottom: 0; }
 .home-ask .ask-cancel b { color: var(--muted, #667); }
 @media (prefers-color-scheme: dark) { .home-ask .ask-danger b { color: #ff8a7a; } }
+
+/* 有新版時的提示條 */
+.hl-update {
+  position: fixed; z-index: 300; inset: 0 0 auto 0;
+  display: flex; align-items: center; gap: .6rem;
+  padding: max(.6rem, env(safe-area-inset-top)) .85rem .6rem;
+  font-size: .9rem; color: #fff; background: var(--c-habit, #f2a154);
+}
+.hl-update span { flex: 1; }
+.hl-update-go {
+  flex: 0 0 auto; padding: .3rem .7rem; font-size: .85rem; font-weight: 700;
+  color: var(--c-habit, #f2a154); background: #fff; border: 0; border-radius: 8px; cursor: pointer;
+}
+.hl-update-x { flex: 0 0 auto; padding: 0 .25rem; font-size: 1rem; color: #fff; background: transparent; border: 0; cursor: pointer; }
