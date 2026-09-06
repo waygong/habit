@@ -12,6 +12,68 @@ function openPanel() {
   openHabitPanel(null, () => document.body.classList.remove('panel-open'));   // 關面板 → 回首頁
 }
 
+// 選好備份檔之後問「怎麼進來」。刻意不用系統的確認視窗:
+//   那種視窗只有「確定/取消」兩顆,一定得把其中一個動作塞給「取消」,
+//   而使用者按取消是想放棄 —— 結果反而執行了最危險的覆蓋。這裡三個選擇各自一顆鈕。
+function askImportMode(file) {
+  const box = document.getElementById('importAsk');
+  const done = (msg) => { box.hidden = true; box.innerHTML = ''; if (msg) showUndoToast(0, msg); };
+
+  const run = async (mode) => {
+    try {
+      const r = await importBackupFile(file, mode);
+      done('已還原 ' + r.count + ' 筆');
+    } catch (err) {
+      done('');
+      alert('還原失敗:' + (err && err.message ? err.message : err));
+    }
+  };
+
+  box.innerHTML = '';
+  const name = document.createElement('p');
+  name.className = 'ask-file';
+  name.textContent = '📄 ' + file.name;
+  const q = document.createElement('p');
+  q.className = 'ask-q';
+  q.textContent = '這份備份要怎麼進來?';
+  box.append(name, q);
+
+  const mk = (label, sub, cls, fn) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'ask-btn' + (cls ? ' ' + cls : '');
+    b.innerHTML = '<b></b><span></span>';
+    b.querySelector('b').textContent = label;
+    b.querySelector('span').textContent = sub;
+    b.addEventListener('click', fn);
+    return b;
+  };
+
+  box.append(mk('合併', '保留現在的,把備份接在後面', '', () => run('merge')));
+
+  const ovr = mk('整份覆蓋', '現在的設定和記錄會被換掉,救不回來', 'ask-danger', () => {});
+  let armed = false, timer = null;
+  ovr.addEventListener('click', () => {
+    if (!armed) {
+      armed = true; ovr.classList.add('ask-armed');
+      ovr.querySelector('b').textContent = '⚠ 再按一次:整份覆蓋';
+      ovr.querySelector('span').textContent = '現在這台裝置上的資料會被換掉';
+      timer = setTimeout(() => {
+        armed = false; ovr.classList.remove('ask-armed');
+        ovr.querySelector('b').textContent = '整份覆蓋';
+        ovr.querySelector('span').textContent = '現在的設定和記錄會被換掉,救不回來';
+      }, 4000);
+      return;
+    }
+    if (timer) clearTimeout(timer);
+    run('replace');
+  });
+  box.append(ovr);
+
+  box.append(mk('取消', '什麼都不做', 'ask-cancel', () => done('')));
+  box.hidden = false;
+  box.scrollIntoView({ block: 'nearest' });
+}
+
 // 存不了的裝置(無痕、擋網站資料)→ 掛一條蓋在最上層的警告。
 //   刻意不放在首頁裡:一開啟就直接進面板,放首頁會被面板蓋住、等於沒警告到。
 function warnNoStorage() {
@@ -45,16 +107,10 @@ async function boot() {
   });
 
   $('#btnImport').addEventListener('click', () => $('#fileImport').click());
-  $('#fileImport').addEventListener('change', async (e) => {
+  $('#fileImport').addEventListener('change', (e) => {
     const file = e.target.files && e.target.files[0];
     e.target.value = '';                                     // 清掉,才能連續選同一個檔
-    if (!file) return;
-    const merge = confirm('要「合併」到現在的資料嗎?\n\n確定 = 合併(保留現有的,把備份接在後面)\n取消 = 整份覆蓋(現在的設定和記錄會被換掉)');
-    if (!merge && !confirm('確定要用備份「整份覆蓋」嗎?這台裝置上現在的設定和記錄會被換掉,無法復原。')) return;
-    try {
-      const r = await importBackupFile(file, merge ? 'merge' : 'replace');
-      showUndoToast(0, '已還原 ' + r.count + ' 筆');
-    } catch (err) { alert('還原失敗:' + (err && err.message ? err.message : err)); }
+    if (file) askImportMode(file);
   });
 
   // 打字到一半就關分頁 → 把還沒寫入的補上

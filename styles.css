@@ -299,3 +299,22 @@ body.panel-open #home { display: none; }            /* 面板開著時首頁不�
 #habitPanel .hl-armed {
   color: #fff !important; background: #c0392b; border-color: #c0392b !important; font-weight: 700;
 }
+
+/* 選好備份檔之後的「怎麼進來」:三個選擇各自一顆鈕,不用系統的確定/取消視窗 */
+.home-ask { margin-top: 1rem; padding: .85rem; border: 1px solid var(--line, #ddd); border-radius: 12px; background: var(--card, #f5f5f7); }
+.home-ask .ask-file { margin: 0 0 .2rem; font-size: .85rem; color: var(--muted, #667); word-break: break-all; }
+.home-ask .ask-q { margin: 0 0 .7rem; font-size: .95rem; font-weight: 600; color: var(--fg, #222); }
+.home-ask .ask-btn {
+  display: block; width: 100%; margin-bottom: .5rem; padding: .6rem .8rem; text-align: left;
+  color: var(--fg, #222); background: var(--bg, #fff);
+  border: 1px solid var(--line, #ddd); border-radius: 10px; cursor: pointer;
+}
+.home-ask .ask-btn b { display: block; font-size: .95rem; }
+.home-ask .ask-btn span { display: block; margin-top: .15rem; font-size: .8rem; color: var(--muted, #667); }
+.home-ask .ask-danger { border-color: rgba(192, 57, 43, .45); }
+.home-ask .ask-danger b { color: #c0392b; }
+.home-ask .ask-armed { background: #c0392b; border-color: #c0392b; }
+.home-ask .ask-armed b, .home-ask .ask-armed span { color: #fff; }
+.home-ask .ask-cancel { margin-bottom: 0; }
+.home-ask .ask-cancel b { color: var(--muted, #667); }
+@media (prefers-color-scheme: dark) { .home-ask .ask-danger b { color: #ff8a7a; } }
