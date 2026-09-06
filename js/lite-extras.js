@@ -136,3 +136,35 @@ export function themeToggle() {
   sync();
   return b;
 }
+
+// 少數習慣用的是有固定代號的量表 → 名稱旁給一個「?」,點了就地展開一行說明。
+//   刻意不連到外部網站:一來會把人帶離 App、離線就看不到,二來外站的標題和圖片不受我們控制。
+//   形容一律用中性的形狀詞(不用食物比喻)—— 同一頁上面就是飲食項目。
+//   用「名稱包含」比對,所以改成「🧻 如廁記錄」還是找得到;改成完全不同的名字就不給。
+const HELP_TIPS = [
+  ['如廁', 'B1 一顆顆分開、很硬 · B2 結成一塊、表面凹凸 · B3 條狀、表面有裂痕 · B4 條狀、光滑柔軟(最理想) · B5 分成軟塊、邊緣清楚 · B6 糊狀、邊緣不清 · B7 幾乎是液體'],
+];
+
+export function helpLink(name) {
+  const hit = HELP_TIPS.find(([key]) => (name || '').includes(key));
+  if (!hit) return null;
+
+  const tip = document.createElement('div');
+  tip.className = 'hl-tip';
+  tip.hidden = true;
+  tip.textContent = hit[1];
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'hl-help';
+  btn.textContent = '?';
+  btn.title = '代號說明';
+  btn.setAttribute('aria-label', '代號說明');
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    tip.hidden = !tip.hidden;
+    btn.classList.toggle('on', !tip.hidden);
+  });
+
+  return { btn, tip };
+}

@@ -1,5 +1,5 @@
 // sw.js — 極簡離線快取。改版時把 VERSION 加一,舊快取會自動清掉。
-const VERSION = 'hl-1947a157';
+const VERSION = 'hl-2c7446ff';
 const ASSETS = [
   './', 'index.html', 'styles.css', 'manifest.webmanifest', 'icon.png',
   'js/main.js', 'js/habit.js', 'js/store.js', 'js/db.js', 'js/model.js',
