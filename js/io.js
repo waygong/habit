@@ -52,25 +52,20 @@ function normalize(data) {
   return root;
 }
 
-// mode:'replace' 整份換掉 / 'merge' 接在現有資料後面
-async function importBackupText(txt, mode = 'replace') {
+// 還原 = 用備份取代現在的資料。
+//   刻意沒有「合併」:這裡只有一份習慣清單,把兩份疊起來只會變成重複的習慣
+//   和讀不到的殘留記錄(同名同日期會有兩筆,只認得到其中一筆)。
+async function importBackupText(txt) {
   let data;
   try { data = JSON.parse(txt); } catch (e) { throw new Error('不是有效的 JSON 備份檔'); }
   const incoming = normalize(data);
   if (!incoming) throw new Error('備份檔結構不符(找不到 root)');
-  if (mode === 'merge') {
-    const used = new Set();
-    (function collect(n) { if (n.id) used.add(n.id); (n.children || []).forEach(collect); })(state.doc.root);
-    for (const c of incoming.children) reidUnique(c, used);
-    state.doc.root.children.push(...incoming.children);
-  } else {
-    reidUnique(incoming, new Set());
-    state.doc.root = incoming;
-  }
+  reidUnique(incoming, new Set());
+  state.doc.root = incoming;
   await saveNow();
   return { count: countNodes(incoming) };
 }
 
-export function importBackupFile(file, mode = 'replace') {
-  return file.text().then((txt) => importBackupText(txt, mode));
+export function importBackupFile(file) {
+  return file.text().then((txt) => importBackupText(txt));
 }

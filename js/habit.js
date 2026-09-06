@@ -771,7 +771,7 @@ function recInput(h, val, m, preview, rec) {
   } else if (h.ftype === 'list' && h.cfg.check) {
     // 勾選清單:橫向一排「縱向卡」(勾選框在上、文字直書往下)→ 截圖上緣一排勾選框、一眼看幾個勾;不像每項一列那樣佔高度
     const items = preview
-      ? [{ text: '魚油', done: true }, { text: '益生菌', done: false }, { text: '維他命C', done: true }]
+      ? [{ text: '項目一', done: true }, { text: '項目二', done: false }, { text: '項目三', done: true }]
       : (rec ? parseListNote(rec.note, true) : parseListNote(h.node && h.node.note, true).map((it) => ({ text: it.text, done: false })));
     const box = document.createElement('div'); box.className = 'hb-listbox hb-vlist';
     const commit = () => { writeListRec(h.name, _recDate, items, true); paint(m); };
@@ -792,7 +792,7 @@ function recInput(h, val, m, preview, rec) {
   } else if (h.ftype === 'list') {
     // 自由記錄(反思等,非勾選):每項一列 input,可即時打字
     const items = preview
-      ? [{ text: '今天走了很多路' }]
+      ? [{ text: '寫一則…' }]
       : (rec ? parseListNote(rec.note, false) : parseListNote(h.node && h.node.note, false).map((it) => ({ text: it.text })));
     const box = document.createElement('div'); box.className = 'hb-listbox';
     const commit = () => { writeListRec(h.name, _recDate, items, false); paint(m); };
