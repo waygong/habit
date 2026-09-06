@@ -357,10 +357,20 @@ export function openHabitPanel(date, onClose) {
     m.querySelector('.hb-full').addEventListener('click', () => m.querySelector('.hb-card').classList.toggle('hb-card--full'));   // 全螢幕/還原(方便看/截圖)
     m.querySelector('.hb-undo').addEventListener('click', () => { if (canUndo()) { undo(); rerender(); paint(m); } });   // 復原(拖曳/改名/隱藏都可救)
     m.querySelector('.hb-redo').addEventListener('click', () => { if (canRedo()) { redo(); rerender(); paint(m); } });
-    m.querySelectorAll('.hb-tab').forEach((b) => b.addEventListener('click', () => { _tab = b.dataset.tab; if (_tab === 'record') _recDate = localTodayYmd(); paint(m); }));   // 切到記錄一律回今天(修:切回來要再點今天才更新)
+    m.querySelectorAll('.hb-tab').forEach((b) => b.addEventListener('click', () => {
+      _tab = b.dataset.tab;
+      try { sessionStorage.setItem('hl_tab', _tab); } catch (e) {}   // 只記在這次開啟期間:重新整理留在原頁,關掉再開回記錄頁
+      if (_tab === 'record') _recDate = localTodayYmd();
+      paint(m);
+    }));   // 切到記錄一律回今天(修:切回來要再點今天才更新)
   }
   if (date) { _recDate = date; _tab = 'record'; }
-  else { _tab = listHabits(state.doc.root).length ? 'record' : 'manage'; _recDate = localTodayYmd(); }   // 沒習慣→管理、有→記錄;預設今天
+  else {
+    const has = listHabits(state.doc.root).length;
+    let last = ''; try { last = sessionStorage.getItem('hl_tab') || ''; } catch (e) {}
+    _tab = !has ? 'manage' : (last === 'manage' ? 'manage' : 'record');   // 重新整理回到剛才那一頁
+    _recDate = localTodayYmd();
+  }   // 沒習慣→管理、有→記錄;預設今天
   m.hidden = false; if (m._repos) m._repos(); paint(m);   // 開時先貼齊 visualViewport
 }
 function paint(m) {
@@ -724,8 +734,10 @@ function recInput(h, val, m, preview, rec) {
     }
   } else if (h.ftype === 'time') {
     const mt = val.match(/(\d{1,2}:\d{2})\s*[~～]\s*(\d{1,2}:\d{2})/);
-    const t1 = timeInput(mt && mt[1]), t2 = timeInput(mt && mt[2]);
-    const dur = document.createElement('span'); dur.className = 'fpick-dur'; if (mt) dur.textContent = durText(mt[1], mt[2]);
+    const pv = preview ? ['23:30', '07:00'] : null;   // 預覽:給一組示範時間,才看得出「起~迄 + 自動算時長」的樣子
+    const t1 = timeInput(pv ? pv[0] : (mt && mt[1])), t2 = timeInput(pv ? pv[1] : (mt && mt[2]));
+    const dur = document.createElement('span'); dur.className = 'fpick-dur';
+    if (pv) dur.textContent = durText(pv[0], pv[1]); else if (mt) dur.textContent = durText(mt[1], mt[2]);
     // 只存值 + 就地更新時長,不 paint(m) 重建面板(否則正在互動的時間選擇器會被砍掉→「選完就關閉」)
     const u = () => { if (!(t1.value && t2.value)) return; dur.textContent = durText(t1.value, t2.value); if (!preview) setRecord(h.name, _recDate, t1.value + '~' + t2.value + ' (' + durText(t1.value, t2.value) + ')'); };
     t1.addEventListener('change', u); t2.addEventListener('change', u);
