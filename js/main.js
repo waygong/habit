@@ -21,7 +21,16 @@ function showUpdateBar() {
   msg.textContent = '有新版本了';
   const go = document.createElement('button');
   go.type = 'button'; go.className = 'hl-update-go'; go.textContent = '重新載入';
-  go.addEventListener('click', () => location.reload());
+  go.addEventListener('click', () => {
+    // 新版可能還沒接手,這時重整只會再拿到舊的一份 → 等它接手再重整(最多等 3 秒)
+    go.disabled = true; go.textContent = '更新中…';
+    let reloaded = false;
+    const bye = () => { if (!reloaded) { reloaded = true; location.reload(); } };
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.addEventListener('controllerchange', bye, { once: true });
+      setTimeout(bye, 3000);
+    } else bye();
+  });
   const x = document.createElement('button');
   x.type = 'button'; x.className = 'hl-update-x'; x.textContent = '✕'; x.setAttribute('aria-label', '稍後再說');
   x.addEventListener('click', () => el.remove());
@@ -38,7 +47,7 @@ function askImportMode(file) {
   const run = async () => {
     try {
       const r = await importBackupFile(file);
-      done('已還原 ' + r.count + ' 筆');
+      done('已還原 ' + r.count + ' 筆(換錯了開面板按 ↩)');
     } catch (err) {
       done('');
       alert('還原失敗:' + (err && err.message ? err.message : err));
@@ -66,7 +75,7 @@ function askImportMode(file) {
 
   box.append(mk('取消', '什麼都不做', 'ask-cancel', () => done('')));   // 安全的放上面,危險的放下面
 
-  const ovr = mk('用備份取代', '現在的設定和記錄會被換掉,救不回來', 'ask-danger', () => {});
+  const ovr = mk('用備份取代', '現在的設定和記錄會被換掉(換錯了可以開面板按 ↩ 救回來)', 'ask-danger', () => {});
   let armed = false, timer = null;
   ovr.addEventListener('click', () => {
     if (!armed) {
@@ -76,7 +85,7 @@ function askImportMode(file) {
       timer = setTimeout(() => {
         armed = false; ovr.classList.remove('ask-armed');
         ovr.querySelector('b').textContent = '用備份取代';
-        ovr.querySelector('span').textContent = '現在的設定和記錄會被換掉,救不回來';
+        ovr.querySelector('span').textContent = '現在的設定和記錄會被換掉(換錯了可以開面板按 ↩ 救回來)';
       }, 4000);
       return;
     }

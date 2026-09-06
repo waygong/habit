@@ -1,5 +1,5 @@
 // io.js — 備份:整份資料存成 .json、以及從 .json 匯入還原。
-import { state, saveNow } from './store.js';
+import { state, saveNow, snapshot } from './store.js';
 import { uid } from './model.js';
 import { localTodayYmd } from './ops.js';
 
@@ -60,6 +60,7 @@ async function importBackupText(txt) {
   try { data = JSON.parse(txt); } catch (e) { throw new Error('不是有效的 JSON 備份檔'); }
   const incoming = normalize(data);
   if (!incoming) throw new Error('備份檔結構不符(找不到 root)');
+  snapshot();                       // 還原錯了還有得救:開面板按左上的 ↩
   reidUnique(incoming, new Set());
   state.doc.root = incoming;
   await saveNow();
