@@ -241,7 +241,7 @@ body.panel-open #home { display: none; }            /* 面板開著時首頁不�
 
 /* 全部勾選:原本跟「返回」同款太隱形,給它橘框 + 粗字,一眼看得到 */
 #habitPanel .hl-selall {
-  flex: 0 0 auto; font-size: 14px; font-weight: 700;
+  flex: 0 0 auto; font-size: 15px; font-weight: 700;
   color: var(--c-habit); border-color: var(--c-habit); border-style: solid;
   background: color-mix(in srgb, var(--c-habit) 12%, transparent);
 }
@@ -250,9 +250,9 @@ body.panel-open #home { display: none; }            /* 面板開著時首頁不�
 .hl-picks { display: flex; flex-direction: column; gap: 4px; padding-bottom: 6px; border-bottom: 1px dashed var(--line); }
 .hl-picks .hb-syntax { margin-bottom: 2px; }
 .hl-pickrow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
-.hl-pickcat { flex: 0 0 auto; min-width: 3.4em; font-size: 11px; color: var(--muted); white-space: nowrap; }
+.hl-pickcat { flex: 0 0 auto; min-width: 3.4em; font-size: 12.5px; color: var(--muted); white-space: nowrap; }
 .hl-pick {
-  padding: 3px 8px; font-size: 12.5px; line-height: 1.3; white-space: nowrap;
+  padding: 4px 9px; font-size: 13.5px; line-height: 1.3; white-space: nowrap;
   color: var(--fg); background: var(--btn);
   border: 1px solid var(--line); border-radius: 14px; cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -265,16 +265,16 @@ body.panel-open #home { display: none; }            /* 面板開著時首頁不�
 /* 還沒設目標:數字顯示成 0/? 並標成主題色,一眼看得出這裡待填 */
 #habitPanel .hb-recnum.hl-notgt { color: var(--c-habit); border-bottom-style: dashed; }
 .hl-tgthint {
-  padding: 7px 10px; margin: 2px 0 4px; border-radius: 8px; font-size: 12.5px; line-height: 1.5;
+  padding: 8px 10px; margin: 2px 0 4px; border-radius: 8px; font-size: 13.5px; line-height: 1.5;
   color: var(--c-habit); background: color-mix(in srgb, var(--c-habit) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--c-habit) 45%, transparent);
 }
 
 /* 日期旁的小字:講清楚它只影響輸出,不是切去看那天的記錄 */
-.hl-datenote { flex: 1 1 100%; font-size: 11px; color: var(--muted); line-height: 1.3; }
+.hl-datenote { flex: 1 1 100%; font-size: 12.5px; color: var(--muted); line-height: 1.3; }
 
 /* 清空這天的記錄:低調、置右,不跟記錄搶注意力 */
-#habitPanel .hl-clearday { align-self: flex-end; margin-top: 6px; font-size: 12.5px; color: var(--muted); }
+#habitPanel .hl-clearday { align-self: flex-end; margin-top: 6px; font-size: 13.5px; color: var(--muted); }
 
 /* 亮/暗切換:跟旁邊的 ↩ ↪ 同款大小 */
 .hl-theme {
@@ -332,3 +332,7 @@ body.panel-open #home { display: none; }            /* 面板開著時首頁不�
   color: var(--c-habit, #f2a154); background: #fff; border: 0; border-radius: 8px; cursor: pointer;
 }
 .hl-update-x { flex: 0 0 auto; padding: 0 .25rem; font-size: 1rem; color: #fff; background: transparent; border: 0; cursor: pointer; }
+
+/* 記錄時「往下拉」不要變成重新整理:填到一半誤觸會整個重來。
+   關掉面板回到首頁就恢復正常(要重整隨時可以),而且有新版時頂端會自己跳提示,不必靠下拉。 */
+html:has(body.panel-open), body.panel-open { overscroll-behavior-y: none; }
