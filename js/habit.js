@@ -669,7 +669,7 @@ function recInput(h, val, m, preview, rec) {
     // (b) 記錄自帶「值/目標單位」→ 改定義目標不回溯汙染舊記錄。有記錄用它自己的目標,沒有才用定義現值。
     const pm = val.match(/^\s*(-?\d+(?:\.\d+)?)\s*\/\s*(-?\d+(?:\.\d+)?)\s*(.*)$/);
     const cur = pm ? parseFloat(pm[1]) : (parseFloat(val) || 0);
-    const target = pm ? parseFloat(pm[2]) : (h.cfg.target || 0);
+    const target = pm ? parseFloat(pm[2]) : (h.cfg.target || (preview ? 3 : 0));   // 預覽:沒填目標就用個示範數字,不要在示範裡出現問號
     const unit = pm ? (pm[3] || h.cfg.unit || '份') : (h.cfg.unit || '份');
     const step = h.cfg.step || defStep(unit);
     const num = document.createElement('span'); num.className = 'hb-recnum' + (preview ? '' : ' hb-tgtedit'); if (!target) num.classList.add('hl-notgt'); num.textContent = cur + (target ? '/' + target : '/?') + (unit === '份' ? '' : unit);
