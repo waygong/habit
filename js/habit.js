@@ -283,7 +283,7 @@ function copyRecordImage() {
     y += lineH;
     r.detail.forEach((d) => { ctx.font = '13px -apple-system, system-ui, sans-serif'; ctx.fillStyle = '#888888'; ctx.fillText(d, padX + 16, y + detH / 2); y += detH; });
   });
-  const dl = () => c.toBlob((blob) => { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = '習慣_' + _copyDate + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1500); showUndoToast(0, '已存成圖片檔'); }, 'image/png');
+  const dl = () => c.toBlob((blob) => { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = '習慣記錄 ' + _copyDate + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1500); showUndoToast(0, '已存成圖片檔'); }, 'image/png');
   try {
     if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
       const item = new ClipboardItem({ 'image/png': new Promise((res) => c.toBlob(res, 'image/png')) });

@@ -5,11 +5,6 @@ import { localTodayYmd } from './ops.js';
 
 const isMobileLike = () => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
 
-function stamp() {
-  const d = new Date(), p = (n) => String(n).padStart(2, '0');
-  return localTodayYmd() + '-' + p(d.getHours()) + p(d.getMinutes());
-}
-
 // 手機優先走「分享」(可以存到檔案 App / iCloud / 傳給自己),桌機直接下載。
 async function shareOrDownload(text, filename, mime = 'application/json') {
   if (isMobileLike() && navigator.canShare) {
@@ -32,7 +27,8 @@ function backupJSONText() {
 }
 
 export async function exportBackup() {
-  return shareOrDownload(backupJSONText(), 'habit-' + stamp() + '.json');
+  // 檔名給人看的:一眼知道是什麼、哪一天存的(同一天存兩次,系統會自己加 (1))
+  return shareOrDownload(backupJSONText(), '習慣記錄 ' + localTodayYmd() + '.json');
 }
 
 // 匯入時重發撞號的 id,避免合併後兩個節點同 id。
