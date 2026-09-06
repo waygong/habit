@@ -96,7 +96,7 @@ body {
 .hb-type { padding:5px 11px; font-size:13px; background:transparent; color:var(--fg); border:1px solid var(--line); border-radius:16px; cursor:pointer; }
 .hb-type.on { background:var(--c-4); color:#fff; border-color:var(--c-4); }
 .hb-cfg { display:flex; flex-direction:column; gap:8px; }
-.hb-syntax { font-size:12px; color:var(--muted); font-family:monospace; background:rgba(242,161,84,.1); border-radius:6px; padding:5px 8px; }
+.hb-syntax { font-size:12px; color:var(--muted); font-family:monospace; background:color-mix(in srgb, var(--c-4) 10%, transparent); border-radius:6px; padding:5px 8px; }
 .hb-pvbox { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:6px 8px; border:1px dashed var(--line); border-radius:8px; background:repeating-linear-gradient(45deg, transparent, transparent 7px, rgba(128,128,128,.05) 7px, rgba(128,128,128,.05) 14px); }
 .hb-pv { pointer-events:none; opacity:.5; filter:saturate(.6); }
 .hb-pvbox .hb-lbl { flex:0 0 100%; }
@@ -127,7 +127,7 @@ body {
 .hb-listbox { flex:1 0 100%; display:flex; flex-direction:column; gap:4px; width:100%; }
 .hb-listbox.hb-vlist { flex-direction:row; flex-wrap:wrap; gap:8px; align-items:flex-start; }
 .hb-vchip { display:inline-flex; flex-direction:column; align-items:center; gap:4px; padding:6px 5px; border:1px solid var(--line); border-radius:8px; background:var(--bg); -webkit-tap-highlight-color:transparent; }
-.hb-vchip.on { background:rgba(242,161,84,.18); border-color:var(--c-4); }
+.hb-vchip.on { background:color-mix(in srgb, var(--c-4) 18%, transparent); border-color:var(--c-4); }
 .hb-vchip input[type=checkbox] { margin:0; width:20px; height:20px; }
 .hb-vtext { writing-mode:vertical-rl; text-orientation:upright; letter-spacing:1px; font-size:15px; line-height:1.15; max-height:7em; overflow:hidden; cursor:text; }
 .hb-vchip.on .hb-vtext { color:#c07b1a; }
@@ -353,3 +353,23 @@ html:has(body.panel-open), body.panel-open { overscroll-behavior-y: none; }
   font-size: 12.5px; line-height: 1.7; white-space: normal; word-break: break-word;
   color: var(--muted); background: var(--card);
 }
+
+/* 主題色:管理頁底部一排小色塊 */
+.hl-colors { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.hl-colors-lbl { flex: 0 0 auto; font-size: 12.5px; color: var(--muted); }
+.hl-dot {
+  flex: 0 0 auto; width: 26px; height: 26px; padding: 0;
+  border: 2px solid transparent; border-radius: 50%; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.hl-dot.on { border-color: var(--fg); box-shadow: 0 0 0 2px var(--bg) inset; }
+
+/* 主題色:同一個色相,暗底用鮮的、白底用深的(白底用鮮色量起來只有 2.1 的對比,太淡)。
+   JS 只負責設 --c-4-dark / --c-4-light 兩個值,選哪個交給 CSS。 */
+:root { --c-4: var(--c-4-dark, #f2a154); }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --c-4: var(--c-4-light, #b86a15); } }
+:root[data-theme="light"] { --c-4: var(--c-4-light, #b86a15); }
+:root[data-theme="dark"] { --c-4: var(--c-4-dark, #f2a154); }
+/* 色塊本身:亮色模式顯示深版,才跟實際會看到的顏色一致 */
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .hl-dot { background: var(--dot-deep) !important; } }
+:root[data-theme="light"] .hl-dot { background: var(--dot-deep) !important; }

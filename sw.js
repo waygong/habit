@@ -1,7 +1,9 @@
 // sw.js — 極簡離線快取。改版時把 VERSION 加一,舊快取會自動清掉。
-const VERSION = 'hl-983c54ff';
+const VERSION = 'hl-c8d27fd0';
 const ASSETS = [
   './', 'index.html', 'styles.css', 'manifest.webmanifest', 'icon.png',
+  'icons/icon-orange.png', 'icons/icon-green.png', 'icons/icon-blue.png',
+  'icons/icon-purple.png', 'icons/icon-pink.png', 'icons/icon-teal.png',
   'js/main.js', 'js/habit.js', 'js/store.js', 'js/db.js', 'js/model.js',
   'js/ops.js', 'js/io.js', 'js/render.js', 'js/lite-extras.js',
 ];

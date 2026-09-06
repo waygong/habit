@@ -7,7 +7,7 @@ import { revealNode } from './render.js';
 import { newNode } from './model.js';
 import { rerender, defStep, showUndoToast, isHidden } from './render.js';
 import { localTodayYmd, nodeById, resolveTarget } from './ops.js';
-import { wipeAllButton, selectAllButton, templatePicks, targetHint, clearDayButton, themeToggle, helpLink } from './lite-extras.js';
+import { wipeAllButton, selectAllButton, templatePicks, targetHint, clearDayButton, themeToggle, helpLink, colorPicker } from './lite-extras.js';
 
 const HB_TGT_KEY = 'habitTargetId';        // 記錄存到哪
 const HB_DEFTGT_KEY = 'habitDefTargetId';  // 習慣「定義」存到哪(建習慣用)
@@ -406,6 +406,7 @@ function paintManage(body, m) {
   tpl.addEventListener('click', () => showTemplates(body, m));
   body.append(tpl);
   if (habits.length) body.append(wipeAllButton(habits.length, () => paint(m)));
+  body.append(colorPicker());
 }
 
 // 推薦範本挑選:分區(飲食/運動作息/身心/生活)+ 吸底加入鈕(範本多、避免加入鈕被擠到看不見、誤以為勾了就加)

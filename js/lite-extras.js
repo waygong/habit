@@ -168,3 +168,97 @@ export function helpLink(name) {
 
   return { btn, tip };
 }
+
+// ── 主題色 ────────────────────────────────────────────
+//   整份樣式的重點色都走 --c-4 這個變數,所以換色只要改它一個。
+const COLOR_KEY = 'hl_color';
+// [暗色用的鮮色, 亮色用的深色, 名稱, 圖示檔名]
+//   同一個色相在兩種底色下要不同深淺:鮮色在白底會太淡(量過,對比只有 2.1~2.8),
+//   深色在黑底又太悶。所以兩個都給,CSS 自己依主題挑。
+const COLORS = [
+  ['#f2a154', '#b86a15', '橘', 'orange'],
+  ['#5bbf7a', '#2e8b53', '綠', 'green'],
+  ['#4c9ffe', '#1a73e8', '藍', 'blue'],
+  ['#8b7ff0', '#6355cf', '紫', 'purple'],
+  ['#e8788f', '#c94464', '粉', 'pink'],
+  ['#3fb6b0', '#207f7b', '青', 'teal'],
+];
+const readColor = () => { try { return localStorage.getItem(COLOR_KEY) || ''; } catch (e) { return ''; } };
+
+function paintColor(v) {
+  const hit = COLORS.find(([hex]) => hex === v) || COLORS[0];
+  const root = document.documentElement.style;
+  root.setProperty('--c-4-dark', hit[0]);    // 兩個都設,亮/暗由 CSS 自己挑
+  root.setProperty('--c-4-light', hit[1]);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', hit[0]);   // 狀態列顏色(Android 會跟著變)
+  paintFavicon(hit[0]);
+  paintAppIcon(hit[0]);
+}
+
+// 加到主畫面用的圖示:指到對應顏色的實體檔。
+//   已經裝在主畫面上的不會跟著變(iOS 是安裝當下抓一次就固定),要換得移除圖示重新加入一次。
+function paintAppIcon(color) {
+  const hit = COLORS.find(([hex]) => hex === color) || COLORS[0];
+  const href = 'icons/icon-' + hit[3] + '.png';
+  document.querySelectorAll('link[rel="apple-touch-icon"]').forEach((l) => { l.href = href; });
+}
+
+// 分頁與書籤上的小圖示:當場畫一個,才能跟著主題色換。
+//   (加到主畫面的那個圖示不吃這套 —— 它是安裝當下抓 manifest 裡的檔案,裝好就固定了。)
+function paintFavicon(color) {
+  try {
+    const S = 64, c = document.createElement('canvas');
+    c.width = c.height = S;
+    const x = c.getContext('2d');
+    if (!x || !x.roundRect) return;                       // 太舊的瀏覽器就維持原本的圖示
+    x.fillStyle = color;
+    x.beginPath(); x.roundRect(0, 0, S, S, 14); x.fill();
+    x.fillStyle = '#ffffff';
+    x.beginPath(); x.roundRect(30, 29, 4.5, 21, 2); x.fill();          // 莖
+    const leaf = (cx, cy, rx, ry, rot) => {                             // 兩片葉
+      x.save(); x.translate(cx, cy); x.rotate(rot);
+      x.beginPath(); x.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); x.fill(); x.restore();
+    };
+    leaf(24, 29, 9.5, 5, -0.55);
+    leaf(41, 31.5, 9.5, 5, 0.55);
+    let link = document.querySelector('link[rel="icon"]');
+    if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
+    link.type = 'image/png';
+    link.href = c.toDataURL('image/png');
+  } catch (e) {}
+}
+
+// 啟動時套用上次選的顏色
+export function applyStoredColor() { paintColor(readColor()); }
+
+// 管理頁底部:一排小色塊
+export function colorPicker() {
+  const wrap = document.createElement('div');
+  wrap.className = 'hl-colors';
+  const lbl = document.createElement('span');
+  lbl.className = 'hl-colors-lbl';
+  lbl.textContent = '主題色';
+  wrap.append(lbl);
+
+  const cur = () => readColor() || COLORS[0][0];
+  const dots = [];
+  COLORS.forEach(([hex, deep, name]) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'hl-dot';
+    b.style.background = hex;
+    b.style.setProperty('--dot-deep', deep);
+    b.title = name;
+    b.setAttribute('aria-label', name);
+    b.addEventListener('click', () => {
+      try { localStorage.setItem(COLOR_KEY, hex); } catch (e) {}
+      paintColor(hex);
+      dots.forEach(([d, h]) => d.classList.toggle('on', h === hex));
+    });
+    dots.push([b, hex]);
+    wrap.append(b);
+  });
+  dots.forEach(([d, h]) => d.classList.toggle('on', h === cur()));
+  return wrap;
+}
