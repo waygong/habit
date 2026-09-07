@@ -366,10 +366,10 @@ html:has(body.panel-open), body.panel-open { overscroll-behavior-y: none; }
 
 /* 主題色:同一個色相,暗底用鮮的、白底用深的(白底用鮮色量起來只有 2.1 的對比,太淡)。
    JS 只負責設 --c-4-dark / --c-4-light 兩個值,選哪個交給 CSS。 */
-:root { --c-4: var(--c-4-dark, #f2a154); }
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --c-4: var(--c-4-light, #b86a15); } }
-:root[data-theme="light"] { --c-4: var(--c-4-light, #b86a15); }
-:root[data-theme="dark"] { --c-4: var(--c-4-dark, #f2a154); }
+:root { --c-4: var(--c-4-dark, #db8f43); }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --c-4: var(--c-4-light, #ad661f); } }
+:root[data-theme="light"] { --c-4: var(--c-4-light, #ad661f); }
+:root[data-theme="dark"] { --c-4: var(--c-4-dark, #db8f43); }
 /* 色塊本身:亮色模式顯示深版,才跟實際會看到的顏色一致 */
 @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .hl-dot { background: var(--dot-deep) !important; } }
 :root[data-theme="light"] .hl-dot { background: var(--dot-deep) !important; }
