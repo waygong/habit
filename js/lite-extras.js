@@ -1,5 +1,6 @@
 // lite-extras.js — 這個 App 自己的幾個小元件(清空、全選、範本快捷、提醒、亮暗切換)。
 import { state, snapshot, saveNow } from './store.js';
+import { showUndoToast } from './render.js';
 
 // 危險動作的兩段式確認:第一下把按鈕變成警告字樣,第二下才真的做;4 秒沒動作就自己取消。
 //   比系統的確認視窗好 —— 不會跳出像錯誤訊息的東西,手機上也少一次打斷。
@@ -236,6 +237,20 @@ function paintFavicon(color) {
 // 啟動時套用上次選的顏色
 export function applyStoredColor() { paintColor(readColor()); }
 
+// 從主畫面開啟時,提醒一次「桌面圖示不會跟著換」——
+//   圖示是加入主畫面的當下抓走的,之後網頁再怎麼改都動不到它(這是系統限制,不是漏做)。
+let _iconNoted = false;
+function noteIconFixed() {
+  if (_iconNoted) return;
+  let standalone = false;
+  try {
+    standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  } catch (e) {}
+  if (!standalone) return;
+  _iconNoted = true;
+  showUndoToast(0, '桌面圖示不會跟著換色,要把圖示移除再加一次主畫面');
+}
+
 // 管理頁底部:一排小色塊
 export function colorPicker() {
   const wrap = document.createElement('div');
@@ -259,6 +274,7 @@ export function colorPicker() {
       try { localStorage.setItem(COLOR_KEY, hex); } catch (e) {}
       paintColor(hex);
       dots.forEach(([d, h]) => d.classList.toggle('on', h === hex));
+      noteIconFixed();
     });
     dots.push([b, hex]);
     wrap.append(b);

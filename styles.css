@@ -55,7 +55,6 @@ body {
 .hb-head { display:flex; align-items:center; gap:12px; }
 .hb-head .pm-title { flex:0 0 auto; font-weight:700; font-size:17px; margin:0; }
 .hb-head .hb-tabs { flex:1; }
-.hb-namelink { cursor:pointer; text-decoration:underline dotted var(--muted); text-underline-offset:3px; }
 .hb-full, .hb-undo, .hb-redo { flex:0 0 auto; width:34px; height:34px; font-size:16px; background:transparent; color:var(--muted); border:1px solid var(--line); border-radius:8px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .hb-undo:disabled, .hb-redo:disabled { opacity:.3; cursor:default; }
 .hb-card--full { width:100vw !important; max-width:100vw; height:100vh; height:100dvh; max-height:100vh; max-height:100dvh; border-radius:0; }
@@ -169,6 +168,10 @@ body {
   :root { --sp-w:min(460px, 42vw); }
 }
 
+/* 連點按鈕不要觸發瀏覽器的「雙擊放大」——計數的 +/− 快按兩下就會中招,畫面莫名縮放。
+   只擋雙擊縮放,雙指 pinch 放大照常可用(所以不用 user-scalable=no,那會把 pinch 一起擋掉)。 */
+button, [role="button"], input[type="checkbox"], select { touch-action: manipulation; }
+
 /* ── 首頁 ─────────────────────────────────────────────── */
 body { margin: 0; background: var(--bg, #fff); color: var(--fg, #222); font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif; }
 #home { max-width: 32rem; margin: 0 auto; padding: calc(max(2.5rem, env(safe-area-inset-top)) + var(--warn-h, 0px)) 1.25rem 3rem; }
@@ -215,9 +218,6 @@ body.panel-open #home { display: none; }            /* 面板開著時首頁不�
 .hl-warn span { flex: 1; }
 .hl-warn-x { flex: 0 0 auto; background: transparent; border: 0; color: inherit; font-size: 1rem; cursor: pointer; padding: 0 .25rem; }
 @media (prefers-color-scheme: dark) { .hl-warn { color: #ffd9ad; background: #3a2a17; border-bottom-color: #6b4a24; } }
-
-/* 習慣名稱不可點 → 拿掉「可點」的暗示 */
-#habitPanel .hb-namelink { text-decoration: none; cursor: default; }
 
 /* 記錄頁:一項一排,好點也好截圖 */
 #habitPanel .hb-reclist.hb-grid { display: flex; flex-direction: column; }
@@ -382,3 +382,23 @@ html:has(body.panel-open), body.panel-open { overscroll-behavior-y: none; }
   color: #fff; background: rgba(192, 57, 43, .82);
   pointer-events: none; user-select: none;
 }
+
+/* 管理頁:還沒設每天目標的習慣,名稱後面標一下(這頁只剩名稱,不標就看不出來) */
+#habitPanel .hl-notgt-tag {
+  display: inline-block;   /* 這頁的 .hb-item span 是 display:block,不覆寫會變成整行寬的長條 */
+  margin: 0 0 0 7px; padding: 1px 7px; border-radius: 999px;
+  font-size: 11px; font-weight: 400; font-family: inherit; vertical-align: 1px;
+  color: var(--c-4); background: color-mix(in srgb, var(--c-4) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c-4) 40%, transparent);
+}
+
+/* 預設項目的上下移動鈕:比 ✕ 窄一點,三顆排在一起不要擠掉輸入框 */
+#habitPanel .hl-mv { padding: 0 7px; font-size: 12px; }
+#habitPanel .hl-mv:disabled { opacity: .28; cursor: default; }
+
+/* 提示訊息:主站的 toast 都是短句所以設了 nowrap,這裡有較長的說明句 → 允許換行並限寬 */
+#undotoast { max-width: calc(100vw - 24px); min-width: min(300px, calc(100vw - 24px)); box-sizing: border-box; }
+#undotoast .ut-msg { white-space: normal; line-height: 1.5; word-break: break-word; }
+
+/* 清空鈕改用文字(🗑 會跟管理頁的「全部刪除」混淆,✕ 又跟每一則的刪除撞) */
+#habitPanel .hb-recclr { width: auto; padding: 2px 8px; font-size: 12px; white-space: nowrap; }

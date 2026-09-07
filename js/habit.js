@@ -103,7 +103,6 @@ function writeListRec(name, date, items, check) {
   if (homed) showUndoToast(0, HB_HOME_TOAST);
 }
 
-// ── 結構化反思(五問):定義附註存「縮寫｜完整問題」提問;記錄附註存「縮寫: 答案」;完成度=已答/總題 ──
 const HB_PIPE = /[|｜]/;   // 縮寫 與 完整問題 的分隔
 const HB_COLON = /[:：]/;  // 縮寫 與 答案 的分隔
 function parsePrompts(defNote) {
@@ -120,6 +119,26 @@ function parseAnswers(recNote) {
 function composeAnswers(prompts, map) {
   return prompts.filter((p) => (map.get(p.key) || '').trim()).map((p) => p.key + ': ' + map.get(p.key).trim()).join('\n');
 }
+// 管理頁「這次新增」的清單項目,推一份到今天的記錄(那天已經記過的話)。
+//   為什麼用「推」不用「拉」:拉(渲染時比對定義、缺的就補)分不出「管理頁後來新增」和
+//   「使用者在記錄頁自己刪掉/改名」——刪掉的每次重畫又被補回來,刪除等於失效。
+//   推只在按下儲存的那一刻發生一次,推完那筆記錄就是使用者的,愛怎麼改都行。
+//   只動今天:過去的記錄是已經發生的事實,不因為之後改設定而變動。
+//   不 snapshot / 不 saveNow —— 由呼叫端(儲存流程)統一做,才維持「一次 ↩ 全退」。
+function pushNewDefaultsToToday(name, beforeTexts, afterTexts) {
+  const today = localTodayYmd();
+  const rec = findRecord(state.doc.root, name, today);
+  if (!rec) return;                                    // 那天還沒記 → 開圖時本來就從定義帶入,不必推
+  const had = new Set(beforeTexts);
+  const items = parseListNote(rec.note, true);
+  const have = new Set(items.map((it) => it.text));
+  const fresh = afterTexts.filter((t) => t && !had.has(t) && !have.has(t));
+  if (!fresh.length) return;
+  fresh.forEach((t) => items.push({ text: t, done: false }));
+  rec.note = composeListNote(items, true);
+  rec.text = composeRec(name, listSummary(items, true), recTags(rec.text));
+}
+
 // 有沒有「固定提問」→ 走結構化反思(非勾選 且 定義附註有提問)
 function listPrompts(h) { return (h && !h.cfg.check) ? parsePrompts(h.node && h.node.note) : []; }
 // 寫結構化反思記錄:附註存已答的「縮寫: 答案」;摘要=已答/總題;全空→刪。
@@ -170,10 +189,8 @@ const HTYPES = [
   { id: 'list', label: '清單', syntax: 'list() / list(勾選)', hint: '一天多筆(每天記幾則),存進附註;可勾選' },
 ];
 
-// 推薦範本(去識別化通用;勾進來就是真定義,可再微調)。defaults=清單型的預設項目(五問提問/固定項目)
 // 順序 = 從範本建立時的預設排列(建立時依此 index 排,不依分類):單值型在前,佔多行的清單型沉底
 // 公開去識別化版(全新生活份量知識 + 版權隔離定案於 ma session,2026-09-04):數字走大眾營養常識中性單值、不烤課程階段精確表。
-// note=非清單型的一句說明備註(記錄時可展開);defaults=清單型預設項(check→勾選項;五問→縮寫);optIn=範本挑選器不預設、要才加。
 const HABIT_TEMPLATES = [
   { name: '😴 睡眠', ftype: 'time', cfg: {}, include: true, cat: '作息運動' },
   { name: '🥬 蔬菜', ftype: 'count', cfg: { target: 0, unit: '份', step: 1 }, include: true, cat: '飲食' },
@@ -232,7 +249,6 @@ function listHabits(root) {
   return out;
 }
 
-// 清單/五問的明細行(勾選項 / 五問答案 / 自由記錄各行)
 function recordDetail(h, rec) {
   if (!rec) return [];
   if (h.ftype === 'list' && h.cfg.check) return parseListNote(rec.note, true).map((it) => (it.done ? '☑ ' : '☐ ') + it.text);
@@ -393,6 +409,10 @@ function paintManage(body, m) {
     const main = document.createElement('button'); main.type = 'button'; main.className = 'hb-item hb-item-main';
     main.innerHTML = '<b></b>';
     main.querySelector('b').textContent = h.name;
+    if (h.ftype === 'count' && !(h.cfg && h.cfg.target > 0)) {
+      const tg = document.createElement('span'); tg.className = 'hl-notgt-tag'; tg.textContent = '未設目標';
+      main.querySelector('b').appendChild(tg);
+    }
     main.addEventListener('click', () => showForm(body, m, h));   // 點=編輯
     const del = document.createElement('button'); del.type = 'button'; del.className = 'hb-item-del'; del.textContent = '🗑'; del.title = '刪除習慣(整個)';
     del.addEventListener('click', (e) => { e.stopPropagation(); if (!confirm('刪除習慣「' + h.name + '」?過去的記錄會一起看不到(資料還在,建一個同名的就會回來)')) return; snapshot(); detachNode(h.node); saveNow(); rerender(); paint(m); });
@@ -466,7 +486,6 @@ function showForm(body, m, editing, prefill, convertNode) {
   const cleanName = (t) => (t || '').replace(/#[^\s#]+/g, '').replace(/\s+/g, ' ').trim();   // 就地轉換:去掉附加標記當習慣名
   const cur = editing || prefill || (convertNode ? { name: cleanName(convertNode.text), ftype: 'count', cfg: { target: 1, unit: '份' }, include: true } : { name: '', ftype: 'count', cfg: { target: 1, unit: '份' }, include: true });
   let ftype = cur.ftype; let cfg = Object.assign({}, cur.cfg);
-  // 清單型的「預設項目」:勾選清單與五問(縮寫+完整問題)各存一份、切換型態不互相破壞。存定義附註;編輯載入、複製帶入
   const dn = editing && editing.node ? editing.node.note : (convertNode ? (convertNode.note || '') : '');
   const pf = (prefill && prefill.defaults) || null;
   const curCheck = !!(cur.cfg && cur.cfg.check);
@@ -512,8 +531,8 @@ function showForm(body, m, editing, prefill, convertNode) {
     } else if (ftype === 'list') {
       const lw = document.createElement('label'); lw.className = 'hb-inc';
       const lc = document.createElement('input'); lc.type = 'checkbox'; lc.checked = !!cfg.check;
-      lc.addEventListener('change', () => { cfg.check = lc.checked || undefined; paintCfg(); });   // 勾選/五問各存一份,切換只換顯示、不破壞另一份
-      lw.append(lc, document.createTextNode(' 可勾選(打勾式);不勾=多行文字(可設固定提問=每日五問)'));
+      lc.addEventListener('change', () => { cfg.check = lc.checked || undefined; paintCfg(); });
+      lw.append(lc, document.createTextNode(' 可勾選(打勾式);不勾=多行文字(下面設了固定提問就每天帶入)'));
       cfgWrap.append(lw);
       // 預設項目:勾選→固定項目(每天帶入未勾);不勾→固定提問(縮寫+完整問題,每天答)。各自獨立
       const arr = cfg.check ? checkDefaults : promptDefaults;
@@ -535,9 +554,21 @@ function showForm(body, m, editing, prefill, convertNode) {
             qx.addEventListener('change', () => { it.q = qx.value.trim(); });
             line.append(kx, qx);
           }
+          const mv = (dir) => {
+            const to = idx + dir;
+            if (to < 0 || to >= arr.length) return;
+            const [x] = arr.splice(idx, 1); arr.splice(to, 0, x);
+            renderDefaults();
+          };
+          const up = document.createElement('button'); up.type = 'button'; up.className = 'hb-item-del hl-mv'; up.textContent = '▲';
+          up.title = '往上移'; up.disabled = idx === 0;
+          up.addEventListener('click', () => mv(-1));
+          const dn2 = document.createElement('button'); dn2.type = 'button'; dn2.className = 'hb-item-del hl-mv'; dn2.textContent = '▼';
+          dn2.title = '往下移'; dn2.disabled = idx === arr.length - 1;
+          dn2.addEventListener('click', () => mv(1));
           const del = document.createElement('button'); del.type = 'button'; del.className = 'hb-item-del'; del.textContent = '✕';
           del.addEventListener('click', () => { arr.splice(idx, 1); renderDefaults(); });
-          line.append(del); dbox.append(line);
+          line.append(up, dn2, del); dbox.append(line);
         });
         const nl = document.createElement('div'); nl.className = 'hb-listline hb-listnew';
         let added = false;
@@ -594,7 +625,11 @@ function showForm(body, m, editing, prefill, convertNode) {
     }
     else if (convertNode) { convertNode.text = txt; node = convertNode; }   // 就地把節點轉成習慣定義(不搬、不建新)
     else { homed = ensureHabitHome(); node = newNode(txt); resolveTarget(hbGetDefTargetId()).children.push(node); }
-    if (ftype === 'list') node.note = cfg.check ? composeListNote(checkDefaults, true) : composePrompts(promptDefaults);   // 勾選→固定項目行、多行→固定提問(縮寫｜完整);空=清掉
+    if (ftype === 'list') {
+      const before = cfg.check ? parseListNote(node.note, true).map((it) => it.text) : null;   // 存檔前的預設項目,用來算出「這次新增了哪些」
+      node.note = cfg.check ? composeListNote(checkDefaults, true) : composePrompts(promptDefaults);   // 勾選→固定項目行、多行→固定提問(縮寫｜完整);空=清掉
+      if (before) pushNewDefaultsToToday(nm, before, checkDefaults.map((it) => it.text));
+    }
     else node.note = hintNote.trim();   // 非清單型:附註=備註提示
     saveNow(); rerender(); paint(m);
     if (homed) showUndoToast(0, HB_HOME_TOAST);
@@ -629,24 +664,20 @@ function paintRecord(body, m) {
   const list = document.createElement('div'); list.className = 'hb-reclist hb-grid';
   habits.forEach((h) => {
     const rec = findRecord(root, h.name, _recDate);
-    const wide = h.ftype === 'time' || h.ftype === 'list'   // 睡眠/清單/五問 → 佔整行
+    const wide = h.ftype === 'time' || h.ftype === 'list'
       || (h.ftype === 'select' && h.cfg.multi)   // 多筆下拉(如如廁)獨佔整行,放 4-5 個
       || (h.ftype === 'count' && (() => { const t = String(h.cfg.target || 0); const u = (h.cfg.unit && h.cfg.unit !== '份') ? h.cfg.unit : ''; return (t + '/' + t + u).length >= 6; })());   // 依「實際顯示的 值/目標單位」寬度判斷(如 100/100克=8、30/30分=6 → 獨佔整行,免半欄擠到值換行);短的(5/5、2/2)才並排。加了 emoji 名稱後半欄更窄,故用實寬
     const row = document.createElement('div'); row.className = 'hb-recrow' + (h.hidden ? ' hb-rowhidden' : '') + (wide ? ' hb-rowwide' : '');
     const nm = document.createElement('div'); nm.className = 'hb-recname';
     const head = document.createElement('span'); head.className = 'hb-recnamehead';   // 名稱 + ⓘ 同一行
     const nmt = document.createElement('span'); nmt.textContent = h.name; head.appendChild(nmt);
-    if (rec) {
-      nmt.classList.add('hb-namelink'); nmt.title = '';
-      nmt.addEventListener('click', () => { m.hidden = true; const cb = _onClose; _onClose = null; if (cb) cb(); revealNode(rec.id); });
-    }
     let noteHint = null;
     nm.appendChild(head);
     { const hl = helpLink(h.name); if (hl) { head.appendChild(hl.btn); row.append(hl.tip); } }   // 有固定代號的習慣:名稱旁給個「?」,點了展開說明
     if (noteHint) nm.appendChild(noteHint);
     row.append(nm);
-    if (rec && wide && h.ftype !== 'count' && !(h.ftype === 'select' && h.cfg.multi)) {   // 清除鈕:count(用 − 減到 0)、多筆下拉(用下拉清)、窄型並排 都不顯示;只留 睡眠/清單/五問
-      const clr = document.createElement('button'); clr.type = 'button'; clr.className = 'hb-recclr'; clr.textContent = '✕'; clr.title = '清除這筆(這天的記錄;習慣還在)';
+    if (rec && wide && h.ftype !== 'count' && !(h.ftype === 'select' && h.cfg.multi)) {
+      const clr = document.createElement('button'); clr.type = 'button'; clr.className = 'hb-recclr'; clr.textContent = '清空'; clr.title = '清掉這一項今天記的內容(習慣還在;清掉後管理頁設的預設項目會重新帶入)';
       clr.addEventListener('click', () => { if (h.ftype === 'list' && !confirm('清除「' + h.name + '」這天的整筆記錄?')) return; setRecord(h.name, _recDate, ''); paint(m); });
       row.append(clr);
     }
@@ -754,8 +785,6 @@ function recInput(h, val, m, preview, rec) {
     cb.addEventListener('change', u); desc.addEventListener('change', u);
     wrap.append(cb, desc);
   } else if (h.ftype === 'list' && listPrompts(h).length) {
-    // 結構化反思(五問):已答→精簡文字行(點=改成輸入編輯);未答→收進「＋ 填五問(N 題)」,點才展開。
-    // 目的:填過的日子只剩答案、超短,自己截圖也截得下(五問墊在最底、最容易被切)。
     const prompts = listPrompts(h);
     const map = parseAnswers(rec && rec.note);
     const box = document.createElement('div'); box.className = 'hb-listbox';
@@ -768,6 +797,11 @@ function recInput(h, val, m, preview, rec) {
       const ans = (map.get(p.key) || '').trim();
       if (ans && !asInput) { const txt = document.createElement('span'); txt.className = 'hb-qanstext'; txt.textContent = ans; txt.title = '點=編輯'; txt.addEventListener('click', () => { const inp = mkInput(p); line.replaceChild(inp, txt); inp.focus(); }); line.append(txt); }
       else line.append(mkInput(p));
+      if (ans) {   // 已答才給 ✕:清掉這題今天的答案(題目是管理頁設的,留著)
+        const del = document.createElement('button'); del.type = 'button'; del.className = 'hb-item-del'; del.textContent = '✕'; del.title = '清掉這題的答案';
+        del.addEventListener('click', () => { map.delete(p.key); commit(); });
+        line.append(del);
+      }
       return line;
     };
     const answered = prompts.filter((p) => (map.get(p.key) || '').trim());
@@ -777,7 +811,7 @@ function recInput(h, val, m, preview, rec) {
       const more = document.createElement('button'); more.type = 'button'; more.className = 'hb-qmore';
       const eb = document.createElement('div'); eb.className = 'hb-qempty'; eb.hidden = true;
       empty.forEach((p) => eb.append(mkLine(p, true)));
-      const sync = () => { more.textContent = (eb.hidden ? '＋ 填五問(還有 ' : '– 收起(') + empty.length + ' 題未答)'; };
+      const sync = () => { more.textContent = eb.hidden ? ('＋ 還有 ' + empty.length + ' 題沒答') : ('– 收起(' + empty.length + ' 題沒答)'); };
       more.addEventListener('click', () => { eb.hidden = !eb.hidden; sync(); }); sync();
       box.append(more, eb);
     }
@@ -792,9 +826,17 @@ function recInput(h, val, m, preview, rec) {
     items.forEach((it, idx) => {
       const chip = document.createElement('div'); chip.className = 'hb-vchip' + (it.done ? ' on' : '');
       const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!it.done;
-      if (!preview) cb.addEventListener('change', () => { it.done = cb.checked; commit(); });
+      // 勾選的先後 = 實際吃的先後 → 勾了就排到已勾的最後、取消就退回未勾區最前。
+      // 這樣左到右直接就是今天的順序,不必為了排序另外加按鈕(卡片是直排的,再塞 ▲▼ 會擠爆)。
+      if (!preview) cb.addEventListener('change', () => {
+        it.done = cb.checked;
+        const i = items.indexOf(it); if (i >= 0) items.splice(i, 1);
+        const lastDone = items.reduce((acc, x, k) => (x.done ? k : acc), -1);   // 移走自己後,最後一個已勾的位置
+        items.splice(lastDone + 1, 0, it);                                       // 勾→已勾區末尾;取消→未勾區開頭(同一式子兩種都對)
+        commit();
+      });
       const tx = document.createElement('span'); tx.className = 'hb-vtext'; tx.textContent = it.text; tx.title = '點文字=改名 / 清空=刪';
-      if (!preview) tx.addEventListener('click', () => { const nv = prompt('項目名稱(清空=刪這項)', it.text); if (nv == null) return; const s = nv.trim(); if (!s) items.splice(idx, 1); else it.text = s; commit(); });
+      if (!preview) tx.addEventListener('click', () => { const nv = prompt('項目名稱(清空=刪這項)', it.text); if (nv == null) return; const s = nv.trim(); const i = items.indexOf(it); if (!s) { if (i >= 0) items.splice(i, 1); } else it.text = s; commit(); });
       chip.append(cb, tx); box.append(chip);
     });
     if (!preview) {   // 末尾「＋」加項
