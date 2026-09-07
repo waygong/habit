@@ -116,7 +116,19 @@ function warnNoStorage() {
   window.addEventListener('resize', sync);
 }
 
+// 正式站以外(測試站、本機)掛一個角落標記,免得兩個站長一樣、手機上分不出正在看哪一個
+const LIVE_HOST = 'waygong.github.io';
+function markPreview() {
+  if (location.hostname === LIVE_HOST) return;
+  document.title = '🚧 ' + document.title;
+  const tag = document.createElement('div');
+  tag.className = 'hl-preview';
+  tag.textContent = '🚧 測試站';
+  document.body.appendChild(tag);
+}
+
 async function boot() {
+  markPreview();
   applyStoredTheme();   // 先套用上次選的亮/暗,免得畫面閃一下
   applyStoredColor();   // 以及上次選的主題色
   await load();
@@ -131,6 +143,19 @@ async function boot() {
   });
 
   $('#btnImport').addEventListener('click', () => $('#fileImport').click());
+
+  // 手動檢查更新:主畫面的 App 沒有重新整理可按,這是唯一的退路
+  $('#btnUpdate').addEventListener('click', async () => {
+    const btn = $('#btnUpdate');
+    btn.disabled = true; btn.textContent = '檢查中…';
+    const done = (msg) => { btn.disabled = false; btn.textContent = '⟳ 檢查更新'; if (msg) showUndoToast(0, msg); };
+    try {
+      const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
+      if (!reg) { done('這個瀏覽器沒有離線快取,重新整理就是最新版'); return; }
+      await reg.update();
+      setTimeout(() => { done(document.querySelector('.hl-update') ? '' : '已經是最新版'); }, 1800);
+    } catch (e) { done('檢查失敗,晚點再試'); }
+  });
   $('#fileImport').addEventListener('change', (e) => {
     const file = e.target.files && e.target.files[0];
     e.target.value = '';                                     // 清掉,才能連續選同一個檔
@@ -145,6 +170,8 @@ async function boot() {
 
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('sw.js').then((reg) => {
+      reg.update().catch(() => {});   // 一開 App 就先問「有沒有新版」——
+      //   加到主畫面的 App 沒有網址列也不能下拉重整,不主動問就可能一直停在舊版
       // 有新版被裝好時主動說一聲 —— 裝在主畫面的人不會自己去重新整理,
       //   沒有這條就得「關掉再開兩次」才會換到新版,而且完全沒有提示。
       reg.addEventListener('updatefound', () => {
