@@ -10,8 +10,11 @@ const $ = (sel) => document.querySelector(sel);
 
 function openPanel(date) {
   document.body.classList.add('panel-open');
+  // 只收日期字串。這個函式也被當成 click handler 用過 —— 那樣會把 MouseEvent 當成日期傳進來,
+  // _recDate 變成事件物件,paintRecord 一呼叫 .slice() 就整頁炸掉(畫面全白)。擋在這裡最保險。
+  const ymd = (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) ? date : null;
   // 傳日期 = 強制切到記錄頁(還原完要看到資料,不能停在使用者上次待的管理頁)
-  openHabitPanel(date || null, () => document.body.classList.remove('panel-open'));   // 關面板 → 回首頁
+  openHabitPanel(ymd, () => document.body.classList.remove('panel-open'));   // 關面板 → 回首頁
 }
 
 // 首頁角落顯示「現在跑的是哪一版」。出問題時第一個要確認的就是這個 ——
@@ -192,7 +195,7 @@ async function boot() {
   if (!status.persistent) warnNoStorage();
   seedTemplatesIfEmpty();   // 全新的裝置 → 先把推薦範本準備好,一開就能記錄
 
-  $('#openHabit').addEventListener('click', openPanel);
+  $('#openHabit').addEventListener('click', () => openPanel());   // 包一層:直接掛 openPanel 會把 MouseEvent 當日期傳進去
 
   $('#btnExport').addEventListener('click', async () => {
     try { const r = await exportBackup(); if (r && r.via !== 'cancel') showUndoToast(0, '已備份'); }
