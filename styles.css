@@ -146,6 +146,34 @@ body {
 .hb-recdesc { flex:1; }
 .hb-recnum { min-width:52px; text-align:center; font-variant-numeric:tabular-nums; }
 .hb-recnum.hb-tgtedit { cursor:pointer; text-decoration:underline dotted var(--muted); text-underline-offset:3px; }
+.hb-recnum.hb-notgt { color:var(--c-habit); border-bottom-style:dashed; }
+.hb-tgthint {
+  padding:8px 10px; margin:2px 0 4px; border-radius:8px; font-size:13.5px; line-height:1.5;
+  color:var(--c-habit); background:color-mix(in srgb, var(--c-habit) 12%, transparent);
+  border:1px solid color-mix(in srgb, var(--c-habit) 45%, transparent);
+}
+#habitPanel .hb-notgt-tag {
+  display:inline-block;
+  margin:0 0 0 7px; padding:1px 7px; border-radius:999px;
+  font-size:11px; font-weight:400; font-family:inherit; vertical-align:1px;
+  color:var(--c-habit); background:color-mix(in srgb, var(--c-habit) 14%, transparent);
+  border:1px solid color-mix(in srgb, var(--c-habit) 40%, transparent);
+}
+#habitPanel .hb-help {
+  flex:0 0 auto; margin-left:5px; padding:0;
+  width:18px; height:18px; line-height:16px;
+  font-size:12px; font-weight:700; text-align:center;
+  color:var(--muted); background:var(--btn); border:1px solid var(--line); border-radius:50%;
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
+}
+#habitPanel .hb-help.on { color:#fff; background:var(--c-habit); border-color:var(--c-habit); }
+#habitPanel .hb-recrow:has(> .hb-tip:not([hidden])) { flex-wrap:wrap; }
+#habitPanel .hb-tip {
+  flex:1 1 100%; order:9;
+  margin:4px 0 2px; padding:6px 9px; border-radius:8px;
+  font-size:12.5px; line-height:1.7; white-space:normal; word-break:break-word;
+  color:var(--muted); background:var(--card);
+}
 .hb-recchip { min-width:30px; padding:3px 9px; font-size:14px; background:transparent; color:var(--fg); border:1px solid var(--line); border-radius:8px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .hb-recchip.on { background:var(--c-4); color:#fff; border-color:var(--c-4); }
 .hb-recrow > .hb-recin { flex:0 1 auto; }
@@ -266,14 +294,6 @@ body.panel-open #home { display: none; }            /* 面板開著時首頁不�
 /* 時間欄放大後,一列兩個(睡眠的起訖)會超出畫面右邊 → 允許換行 */
 #habitPanel .hb-reclist .hb-recrow .hb-recin { flex-wrap: wrap; }
 
-/* 還沒設目標:數字顯示成 0/? 並標成主題色,一眼看得出這裡待填 */
-#habitPanel .hb-recnum.hl-notgt { color: var(--c-habit); border-bottom-style: dashed; }
-.hl-tgthint {
-  padding: 8px 10px; margin: 2px 0 4px; border-radius: 8px; font-size: 13.5px; line-height: 1.5;
-  color: var(--c-habit); background: color-mix(in srgb, var(--c-habit) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--c-habit) 45%, transparent);
-}
-
 /* 日期旁的小字:講清楚它只影響輸出,不是切去看那天的記錄 */
 .hl-datenote { flex: 1 1 100%; font-size: 12.5px; color: var(--muted); line-height: 1.3; }
 
@@ -342,23 +362,6 @@ body.panel-open #home { display: none; }            /* 面板開著時首頁不�
    關掉面板回到首頁就恢復正常(要重整隨時可以),而且有新版時頂端會自己跳提示,不必靠下拉。 */
 html:has(body.panel-open), body.panel-open { overscroll-behavior-y: none; }
 
-/* 名稱旁的「?」:點了展開代號說明(不連外) */
-#habitPanel .hl-help {
-  flex: 0 0 auto; margin-left: 5px; padding: 0;
-  width: 18px; height: 18px; line-height: 16px;
-  font-size: 12px; font-weight: 700; text-align: center;
-  color: var(--muted); background: var(--btn); border: 1px solid var(--line); border-radius: 50%;
-  cursor: pointer; -webkit-tap-highlight-color: transparent;
-}
-#habitPanel .hl-help.on { color: #fff; background: var(--c-habit); border-color: var(--c-habit); }
-#habitPanel .hb-recrow:has(> .hl-tip:not([hidden])) { flex-wrap: wrap; }   /* 說明展開時讓它換到自己一行 */
-#habitPanel .hl-tip {
-  flex: 1 1 100%; order: 9;                       /* 佔整行、排在該列最後 */
-  margin: 4px 0 2px; padding: 6px 9px; border-radius: 8px;
-  font-size: 12.5px; line-height: 1.7; white-space: normal; word-break: break-word;
-  color: var(--muted); background: var(--card);
-}
-
 /* 主題色:管理頁底部一排小色塊 */
 .hl-colors { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); }
 .hl-colors-lbl { flex: 0 0 auto; font-size: 12.5px; color: var(--muted); }
@@ -388,14 +391,6 @@ html:has(body.panel-open), body.panel-open { overscroll-behavior-y: none; }
   pointer-events: none; user-select: none;
 }
 
-/* 管理頁:還沒設每天目標的習慣,名稱後面標一下(這頁只剩名稱,不標就看不出來) */
-#habitPanel .hl-notgt-tag {
-  display: inline-block;   /* 這頁的 .hb-item span 是 display:block,不覆寫會變成整行寬的長條 */
-  margin: 0 0 0 7px; padding: 1px 7px; border-radius: 999px;
-  font-size: 11px; font-weight: 400; font-family: inherit; vertical-align: 1px;
-  color: var(--c-4); background: color-mix(in srgb, var(--c-4) 14%, transparent);
-  border: 1px solid color-mix(in srgb, var(--c-4) 40%, transparent);
-}
 
 /* 預設項目的上下移動鈕:比 ✕ 窄一點,三顆排在一起不要擠掉輸入框 */
 #habitPanel .hl-mv { padding: 0 7px; font-size: 12px; }

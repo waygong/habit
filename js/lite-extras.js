@@ -91,15 +91,6 @@ export function templatePicks(templates, cats, onPick, activeName) {
 }
 
 // 記錄頁頂端:提醒還沒設目標的項目(範本刻意把目標留空,要使用者自己填適合的量)
-export function targetHint(habits) {
-  const pend = habits.filter((h) => h.ftype === 'count' && !(h.cfg && h.cfg.target > 0));
-  if (!pend.length) return null;
-  const d = document.createElement('div');
-  d.className = 'hl-tgthint';
-  d.textContent = '還有 ' + pend.length + ' 項沒設每天的目標(顯示成 0/?):直接點那個數字就能設,設好以後每天都用這個。';
-  return d;
-}
-
 // 記錄頁底部:清空這天記的東西(習慣本身不動),給「想重來一次」用。
 export function clearDayButton(hasAny, onClear) {
   if (!hasAny) return null;   // 這天還沒記東西就不用出現
@@ -141,35 +132,6 @@ export function themeToggle() {
 // 少數習慣用的是有固定代號的量表 → 名稱旁給一個「?」,點了就地展開一行說明。
 //   刻意不連到外部網站:一來會把人帶離 App、離線就看不到,二來外站的標題和圖片不受我們控制。
 //   形容一律用中性的形狀詞(不用食物比喻)—— 同一頁上面就是飲食項目。
-//   用「名稱包含」比對,所以改成「🧻 如廁記錄」還是找得到;改成完全不同的名字就不給。
-const HELP_TIPS = [
-  ['如廁', 'B1 一顆顆分開、很硬 · B2 結成一塊、表面凹凸 · B3 條狀、表面有裂痕 · B4 條狀、光滑柔軟(最理想) · B5 分成軟塊、邊緣清楚 · B6 糊狀、邊緣不清 · B7 幾乎是液體'],
-];
-
-export function helpLink(name) {
-  const hit = HELP_TIPS.find(([key]) => (name || '').includes(key));
-  if (!hit) return null;
-
-  const tip = document.createElement('div');
-  tip.className = 'hl-tip';
-  tip.hidden = true;
-  tip.textContent = hit[1];
-
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'hl-help';
-  btn.textContent = '?';
-  btn.title = '代號說明';
-  btn.setAttribute('aria-label', '代號說明');
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    tip.hidden = !tip.hidden;
-    btn.classList.toggle('on', !tip.hidden);
-  });
-
-  return { btn, tip };
-}
-
 // ── 主題色 ────────────────────────────────────────────
 //   整份樣式的重點色都走 --c-4 這個變數,所以換色只要改它一個。
 const COLOR_KEY = 'hl_color';
