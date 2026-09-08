@@ -276,7 +276,7 @@ function recordRows() {
 }
 function copyRecordText() {
   const rows = recordRows();
-  const txt = '🌱 ' + _copyDate + '\n' + rows.map((r) => r.name + '  ' + r.val + (r.detail.length ? '\n' + r.detail.map((d) => '  ' + d).join('\n') : '')).join('\n');
+  const txt = '🌱 ' + _recDate + '\n' + rows.map((r) => r.name + '  ' + r.val + (r.detail.length ? '\n' + r.detail.map((d) => '  ' + d).join('\n') : '')).join('\n');
   const ok = () => showUndoToast(0, '已複製記錄文字');
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok).catch(() => { try { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); ok(); } catch (e) { alert(txt); } });
   else alert(txt);
@@ -290,7 +290,7 @@ function copyRecordImage() {
   const ctx = c.getContext('2d'); ctx.scale(scale, scale); ctx.textBaseline = 'middle';
   ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
   ctx.fillStyle = '#1a7f45'; ctx.font = 'bold 19px -apple-system, system-ui, sans-serif';
-  ctx.fillText('🌱 ' + _copyDate, padX, headH / 2 + 3);
+  ctx.fillText('🌱 ' + _recDate, padX, headH / 2 + 3);
   ctx.strokeStyle = '#eeeeee'; ctx.beginPath(); ctx.moveTo(0, headH); ctx.lineTo(W, headH); ctx.stroke();
   let y = headH;   // y = 目前行的「頂」;文字畫在 y + 行高/2(垂直置中)
   rows.forEach((r) => {
@@ -299,7 +299,7 @@ function copyRecordImage() {
     y += lineH;
     r.detail.forEach((d) => { ctx.font = '13px -apple-system, system-ui, sans-serif'; ctx.fillStyle = '#888888'; ctx.fillText(d, padX + 16, y + detH / 2); y += detH; });
   });
-  const dl = () => c.toBlob((blob) => { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = '習慣記錄 ' + _copyDate + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1500); showUndoToast(0, '已存成圖片檔'); }, 'image/png');
+  const dl = () => c.toBlob((blob) => { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = '習慣_' + _recDate + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1500); showUndoToast(0, '已存成圖片檔'); }, 'image/png');
   try {
     if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
       const item = new ClipboardItem({ 'image/png': new Promise((res) => c.toBlob(res, 'image/png')) });
@@ -642,22 +642,22 @@ function showForm(body, m, editing, prefill, convertNode) {
 
 // ── 記錄頁:日期選擇 + 目標 + 習慣清單(依型別輸入)──
 let _recDate = '';
-let _copyDate = '';
 function paintRecord(body, m) {
   const root = state.doc.root;
   const allHabits = listHabits(root);
   if (!allHabits.length) { const e = document.createElement('div'); e.className = 'hb-empty'; e.textContent = '先到「管理」建立習慣,或按「恢復範本」。'; body.append(e); return; }
   const habits = allHabits;
-  _recDate = localTodayYmd();                       // 記錄一律記在今天
-  if (!_copyDate) _copyDate = _recDate;
+  if (!_recDate) _recDate = localTodayYmd();
   // 頂:日期 + 今天 +(有隱藏項或正在管理時)管理顯示開關
   const top = document.createElement('div'); top.className = 'hb-rectop';
-  const di = document.createElement('input'); di.type = 'date'; di.className = 'hb-in'; di.value = _copyDate;
-  di.title = '這個日期只會印在「複製文字 / 存成圖」上面;記錄本身一律記在今天';
-  di.addEventListener('change', () => { _copyDate = di.value || localTodayYmd(); paint(m); });
-  const tdy = document.createElement('button'); tdy.type = 'button'; tdy.className = 'hb-cancel'; tdy.textContent = '今天'; tdy.addEventListener('click', () => { _copyDate = localTodayYmd(); paint(m); });
+  const di = document.createElement('input'); di.type = 'date'; di.className = 'hb-in'; di.value = _recDate; di.addEventListener('change', () => { _recDate = di.value || localTodayYmd(); paint(m); });
+  const tdy = document.createElement('button'); tdy.type = 'button'; tdy.className = 'hb-cancel'; tdy.textContent = '今天'; tdy.addEventListener('click', () => { _recDate = localTodayYmd(); paint(m); });
   top.append(di, tdy);
-  { const note = document.createElement('span'); note.className = 'hl-datenote'; note.textContent = '這個日期只會印在複製/存圖上'; top.append(note); }
+  di.max = localTodayYmd();   // 不給選未來:未來還沒發生,沒有東西可記
+  { const ro = _recDate !== localTodayYmd();
+    const note = document.createElement('span'); note.className = 'hl-datenote' + (ro ? ' hl-ro' : '');
+    note.textContent = ro ? ('正在看/改 ' + _recDate.slice(5).replace('-', '/') + ' 的記錄 —— 按「今天」回來') : '可以切到別天補記或修改';
+    top.append(note); }
   body.append(top);
   { const th = targetHint(allHabits); if (th) body.append(th); }
   // 習慣清單(自動流式兩欄:窄型兩個一行、寬型獨佔整行;左右由順序決定,不破壞拖曳排序)
