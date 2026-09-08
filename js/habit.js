@@ -7,7 +7,7 @@ import { revealNode } from './render.js';
 import { newNode } from './model.js';
 import { rerender, defStep, showUndoToast, isHidden } from './render.js';
 import { localTodayYmd, nodeById, resolveTarget } from './ops.js';
-import { wipeAllButton, selectAllButton, templatePicks, targetHint, clearDayButton, themeToggle, helpLink, colorPicker } from './lite-extras.js';
+import { wipeAllButton, selectAllButton, templatePicks, clearDayButton, themeToggle, colorPicker } from './lite-extras.js';
 
 const HB_TGT_KEY = 'habitTargetId';        // 記錄存到哪
 const HB_DEFTGT_KEY = 'habitDefTargetId';  // 習慣「定義」存到哪(建習慣用)
@@ -376,17 +376,17 @@ export function openHabitPanel(date, onClose) {
     m.querySelectorAll('.hb-tab').forEach((b) => b.addEventListener('click', () => {
       _tab = b.dataset.tab;
       try { sessionStorage.setItem('hl_tab', _tab); } catch (e) {}   // 只記在這次開啟期間:重新整理留在原頁,關掉再開回記錄頁
-      if (_tab === 'record') _recDate = hlLastDate() || localTodayYmd();
+      if (_tab === 'record') _recDate = lastViewedDate() || localTodayYmd();
       paint(m);
-    }));   // 切到記錄一律回今天(修:切回來要再點今天才更新)
+    }));   // 切回記錄:沿用剛才在看的那天(跨日回今天)
   }
   if (date) { _recDate = date; _tab = 'record'; }
   else {
     const has = listHabits(state.doc.root).length;
     let last = ''; try { last = sessionStorage.getItem('hl_tab') || ''; } catch (e) {}
     _tab = !has ? 'manage' : (last === 'manage' ? 'manage' : 'record');   // 重新整理回到剛才那一頁
-    _recDate = hlLastDate() || localTodayYmd();   // 同一次使用期間記得剛才在看哪天;跨日一律回今天
-  }   // 沒習慣→管理、有→記錄;預設今天
+    _recDate = lastViewedDate() || localTodayYmd();
+  }   // 沒習慣→管理、有→記錄;日期沿用這次使用期間看的那天
   m.hidden = false; if (m._repos) m._repos(); paint(m);   // 開時先貼齊 visualViewport
 }
 function paint(m) {
@@ -409,8 +409,8 @@ function paintManage(body, m) {
     const main = document.createElement('button'); main.type = 'button'; main.className = 'hb-item hb-item-main';
     main.innerHTML = '<b></b>';
     main.querySelector('b').textContent = h.name;
-    if (h.ftype === 'count' && !(h.cfg && h.cfg.target > 0)) {
-      const tg = document.createElement('span'); tg.className = 'hl-notgt-tag'; tg.textContent = '未設目標';
+    if (h.ftype === 'count' && !(h.cfg && h.cfg.target > 0)) {   // 標出還沒設目標的,不必一項項點進去找
+      const tg = document.createElement('span'); tg.className = 'hb-notgt-tag'; tg.textContent = '未設目標';
       main.querySelector('b').appendChild(tg);
     }
     main.addEventListener('click', () => showForm(body, m, h));   // 點=編輯
@@ -640,13 +640,18 @@ function showForm(body, m, editing, prefill, convertNode) {
   setTimeout(() => nameIn.focus(), 0);
 }
 
-function hlLastDate() {
+// 同一次使用期間記得「剛才在看哪一天」:關掉面板去做別的事、再回來,不用重新切一次日期。
+//   但跨日一定回今天 —— 隔天開 App 還停在昨天,會把今天的記錄記到昨天去,
+//   那個代價比多切一次大得多,所以連當時的「今天」一起存,對不上就作廢。
+const VIEWED_KEY = 'hbViewedDate';
+function lastViewedDate() {
   try {
-    const v = (sessionStorage.getItem('hl_date') || '').split('|');
+    const v = (sessionStorage.getItem(VIEWED_KEY) || '').split('|');
     if (v.length === 2 && /^\d{4}-\d{2}-\d{2}$/.test(v[0]) && v[1] === localTodayYmd()) return v[0];
   } catch (e) {}
   return '';
 }
+
 // ── 記錄頁:日期選擇 + 目標 + 習慣清單(依型別輸入)──
 let _recDate = '';
 function paintRecord(body, m) {
@@ -655,7 +660,7 @@ function paintRecord(body, m) {
   if (!allHabits.length) { const e = document.createElement('div'); e.className = 'hb-empty'; e.textContent = '先到「管理」建立習慣,或按「恢復範本」。'; body.append(e); return; }
   const habits = allHabits;
   if (!_recDate) _recDate = localTodayYmd();
-  try { sessionStorage.setItem('hl_date', _recDate + '|' + localTodayYmd()); } catch (e) {}
+  try { sessionStorage.setItem(VIEWED_KEY, _recDate + '|' + localTodayYmd()); } catch (e) {}   // 記下現在看的是哪天(配 lastViewedDate)
   // 頂:日期 + 今天 +(有隱藏項或正在管理時)管理顯示開關
   const top = document.createElement('div'); top.className = 'hb-rectop';
   const di = document.createElement('input'); di.type = 'date'; di.className = 'hb-in'; di.value = _recDate; di.addEventListener('change', () => { _recDate = di.value || localTodayYmd(); paint(m); });
@@ -667,7 +672,7 @@ function paintRecord(body, m) {
     note.textContent = ro ? ('正在看/改 ' + _recDate.slice(5).replace('-', '/') + ' 的記錄 —— 按「今天」回來') : '可以切到別天補記或修改';
     top.append(note); }
   body.append(top);
-  { const th = targetHint(allHabits); if (th) body.append(th); }
+  { const th = targetHint(allHabits); if (th) body.append(th); }   // 範本的目標留空 → 提醒去設
   // 習慣清單(自動流式兩欄:窄型兩個一行、寬型獨佔整行;左右由順序決定,不破壞拖曳排序)
   const list = document.createElement('div'); list.className = 'hb-reclist hb-grid';
   habits.forEach((h) => {
@@ -681,11 +686,13 @@ function paintRecord(body, m) {
     const nmt = document.createElement('span'); nmt.textContent = h.name; head.appendChild(nmt);
     let noteHint = null;
     nm.appendChild(head);
-    { const hl = helpLink(h.name); if (hl) { head.appendChild(hl.btn); row.append(hl.tip); } }   // 有固定代號的習慣:名稱旁給個「?」,點了展開說明
+    { const hl = helpLink(h.name); if (hl) { head.appendChild(hl.btn); row.append(hl.tip); } }   // 有固定代號的習慣:名稱旁給個「?」
     if (noteHint) nm.appendChild(noteHint);
     row.append(nm);
     if (rec && wide && h.ftype !== 'count' && !(h.ftype === 'select' && h.cfg.multi)) {
-      const clr = document.createElement('button'); clr.type = 'button'; clr.className = 'hb-recclr'; clr.textContent = '清空'; clr.title = '清掉這一項今天記的內容(習慣還在;清掉後管理頁設的預設項目會重新帶入)';
+      // 用「清空」二字而不是 ✕:清單/反思那些列裡,每一則旁邊本來就有 ✕(刪那一則),
+      // 整列的清除鈕也用 ✕ 的話,同一列兩個 ✕ 分不出誰是誰。
+      const clr = document.createElement('button'); clr.type = 'button'; clr.className = 'hb-recclr'; clr.textContent = '清空'; clr.title = '清掉這一項這天記的內容(習慣還在)';
       clr.addEventListener('click', () => { if (h.ftype === 'list' && !confirm('清除「' + h.name + '」這天的整筆記錄?')) return; setRecord(h.name, _recDate, ''); paint(m); });
       row.append(clr);
     }
@@ -703,6 +710,32 @@ function paintRecord(body, m) {
     if (cb) body.append(cb);
   }
 }
+// 範本的目標常常留空(顯示成 0/?),但「點數字就能設」這件事沒人看得出來 → 記錄頁上方提醒一次。
+function targetHint(habits) {
+  const pend = habits.filter((h) => h.ftype === 'count' && !(h.cfg && h.cfg.target > 0));
+  if (!pend.length) return null;
+  const d = document.createElement('div');
+  d.className = 'hb-tgthint';
+  d.textContent = '還有 ' + pend.length + ' 項沒設每天的目標(顯示成 0/?):直接點那個數字就能設,設好以後每天都用這個。';
+  return d;
+}
+
+// 有固定代號的習慣(如廁的 B1–B7)→ 名稱旁一顆「?」,點了就地展開說明,不連外。
+const HELP_TIPS = [
+  ['如廁', 'B1 一顆顆分開、很硬 · B2 結成一塊、表面凹凸 · B3 條狀、表面有裂痕 · B4 條狀、光滑柔軟(最理想) · B5 分成軟塊、邊緣清楚 · B6 糊狀、邊緣不清 · B7 幾乎是液體'],
+];
+function helpLink(name) {
+  const hit = HELP_TIPS.find(([key]) => (name || '').includes(key));
+  if (!hit) return null;
+  const tip = document.createElement('div');
+  tip.className = 'hb-tip'; tip.hidden = true; tip.textContent = hit[1];
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'hb-help'; btn.textContent = '?';
+  btn.title = '代號說明'; btn.setAttribute('aria-label', '代號說明');
+  btn.addEventListener('click', (e) => { e.stopPropagation(); tip.hidden = !tip.hidden; btn.classList.toggle('on', !tip.hidden); });
+  return { btn, tip };
+}
+
 function recInput(h, val, m, preview, rec) {
   const wrap = document.createElement('span'); wrap.className = 'hb-recin' + (preview ? ' hb-pv' : '');
   const set = preview ? (() => {}) : ((v) => { setRecord(h.name, _recDate, v); paint(m); });   // preview=不存;正常存完重繪面板(修 ± 卡 0~1)
@@ -713,7 +746,9 @@ function recInput(h, val, m, preview, rec) {
     const target = pm ? parseFloat(pm[2]) : (h.cfg.target || (preview ? 3 : 0));   // 預覽:沒填目標就用個示範數字,不要在示範裡出現問號
     const unit = pm ? (pm[3] || h.cfg.unit || '份') : (h.cfg.unit || '份');
     const step = h.cfg.step || defStep(unit);
-    const num = document.createElement('span'); num.className = 'hb-recnum' + (preview ? '' : ' hb-tgtedit'); if (!target) num.classList.add('hl-notgt'); num.textContent = cur + (target ? '/' + target : '/?') + (unit === '份' ? '' : unit);
+    const num = document.createElement('span'); num.className = 'hb-recnum' + (preview ? '' : ' hb-tgtedit');
+    if (!target) num.classList.add('hb-notgt');   // 沒設目標 → 顯示 0/? 並標色,一眼看得出這裡待填
+    num.textContent = cur + (target ? '/' + target : '/?') + (unit === '份' ? '' : unit);
     const write = (n, t) => set(Math.max(0, n) + ((t != null ? t : target) ? '/' + (t != null ? t : target) : '') + unit);   // 一律寫回「值/目標單位」;t 給值時改當天目標
     if (!preview) {   // 點數字 = 就地改「這個習慣的目標」(寫進定義,以後每天都用)
       num.title = target ? '點一下改每天的目標' : '還沒設目標 → 點一下設定(以後每天都用這個)';
