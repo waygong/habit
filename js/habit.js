@@ -376,7 +376,7 @@ export function openHabitPanel(date, onClose) {
     m.querySelectorAll('.hb-tab').forEach((b) => b.addEventListener('click', () => {
       _tab = b.dataset.tab;
       try { sessionStorage.setItem('hl_tab', _tab); } catch (e) {}   // 只記在這次開啟期間:重新整理留在原頁,關掉再開回記錄頁
-      if (_tab === 'record') _recDate = localTodayYmd();
+      if (_tab === 'record') _recDate = hlLastDate() || localTodayYmd();
       paint(m);
     }));   // 切到記錄一律回今天(修:切回來要再點今天才更新)
   }
@@ -385,7 +385,7 @@ export function openHabitPanel(date, onClose) {
     const has = listHabits(state.doc.root).length;
     let last = ''; try { last = sessionStorage.getItem('hl_tab') || ''; } catch (e) {}
     _tab = !has ? 'manage' : (last === 'manage' ? 'manage' : 'record');   // 重新整理回到剛才那一頁
-    _recDate = localTodayYmd();
+    _recDate = hlLastDate() || localTodayYmd();   // 同一次使用期間記得剛才在看哪天;跨日一律回今天
   }   // 沒習慣→管理、有→記錄;預設今天
   m.hidden = false; if (m._repos) m._repos(); paint(m);   // 開時先貼齊 visualViewport
 }
@@ -640,6 +640,13 @@ function showForm(body, m, editing, prefill, convertNode) {
   setTimeout(() => nameIn.focus(), 0);
 }
 
+function hlLastDate() {
+  try {
+    const v = (sessionStorage.getItem('hl_date') || '').split('|');
+    if (v.length === 2 && /^\d{4}-\d{2}-\d{2}$/.test(v[0]) && v[1] === localTodayYmd()) return v[0];
+  } catch (e) {}
+  return '';
+}
 // ── 記錄頁:日期選擇 + 目標 + 習慣清單(依型別輸入)──
 let _recDate = '';
 function paintRecord(body, m) {
@@ -648,6 +655,7 @@ function paintRecord(body, m) {
   if (!allHabits.length) { const e = document.createElement('div'); e.className = 'hb-empty'; e.textContent = '先到「管理」建立習慣,或按「恢復範本」。'; body.append(e); return; }
   const habits = allHabits;
   if (!_recDate) _recDate = localTodayYmd();
+  try { sessionStorage.setItem('hl_date', _recDate + '|' + localTodayYmd()); } catch (e) {}
   // 頂:日期 + 今天 +(有隱藏項或正在管理時)管理顯示開關
   const top = document.createElement('div'); top.className = 'hb-rectop';
   const di = document.createElement('input'); di.type = 'date'; di.className = 'hb-in'; di.value = _recDate; di.addEventListener('change', () => { _recDate = di.value || localTodayYmd(); paint(m); });
